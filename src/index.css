@@ -1576,3 +1576,85 @@ legend span {
     scroll-behavior: auto !important;
   }
 }
+
+/* ---------- Payment choice + result states ---------- */
+.pay-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.pay-option {
+  position: relative;
+  display: block;
+  cursor: pointer;
+}
+
+.pay-option input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.pay-option span {
+  display: grid;
+  gap: 2px;
+  height: 100%;
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 2px solid #cfc0e0;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.pay-option b {
+  font-size: 1.08rem;
+  color: var(--purple-900);
+}
+
+.pay-option small {
+  font-size: 0.98rem;
+  color: var(--text-2);
+}
+
+.pay-option:hover span {
+  border-color: var(--purple-500);
+}
+
+.pay-option.on span {
+  border-color: var(--purple-500);
+  background: var(--purple-50);
+  box-shadow: inset 0 0 0 1px var(--purple-500);
+}
+
+.pay-option input:focus-visible + span {
+  outline: 3px solid var(--purple-500);
+  outline-offset: 2px;
+}
+
+.result-text {
+  max-width: 560px;
+  font-size: 1.1rem;
+}
+
+.result-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.btn-soft {
+  background: var(--purple-100);
+  color: var(--purple-800);
+}
+
+.btn-soft:hover {
+  background: #e6d6f8;
+}
+
+@media (max-width: 520px) {
+  .pay-options {
+    grid-template-columns: 1fr;
+  }
+}

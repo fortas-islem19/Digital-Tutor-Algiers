@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { submitRegistration } from '../lib/submit'
+import { submitPaymentConfirmation, submitRegistration } from '../lib/submit'
+import { clearPending, isPaymentReturn, markCounted, readPending, startPayment, verifyPayment } from '../lib/payment'
 import { normalizePhone, validate } from '../lib/validate'
 import { WILAYAS } from '../lib/wilayas'
 import { COURSE, PHONES, PRICE, VENUE, formatDA } from '../config'
@@ -17,6 +18,7 @@ const initial = {
   laptop: '',
   notes: '',
   consent: false,
+  payment: 'online',
   website: '', // honeypot
 }
 
@@ -24,6 +26,19 @@ const PROFILES = ['أستاذ ابتدائي', 'أستاذ متوسط', 'أست�
 const LEVELS = ['مبتدئ', 'متوسط', 'متقدم']
 const LAPTOP = ['نعم', 'لا، أحتاج حلًا']
 const NOTES_MAX = 500
+const PAYMENTS = [
+  ['online', 'الدفع الإلكتروني الآن', 'بطاقة CIB أو الذهبية، عبر Slick-Pay'],
+  ['later', 'الدفع لاحقًا', 'يتصل بك فريق السبورة لتأكيد طريقة الدفع'],
+]
+const PAYMENT_LABEL = { online: 'دفع إلكتروني (Slick-Pay)', later: 'الدفع لاحقًا' }
+
+const trackPurchase = (category) =>
+  window.fbq?.('track', 'Purchase', {
+    value: PRICE,
+    currency: 'DZD',
+    content_name: 'دورة الأستاذ الرقمي - السبورة',
+    content_category: category,
+  })
 
 function Field({ label, name, error, required, full, hint, children }) {
   return (
@@ -64,30 +79,20 @@ function Choices({ name, options, value, onChange, error }) {
   )
 }
 
-function Success({ name, onReset }) {
+function Result({ tone = 'ok', title, children, actions }) {
+  const color = tone === 'ok' ? '#15803d' : tone === 'wait' ? '#8a0bd6' : '#c81e0a'
   return (
-    <motion.div className="success" key="success" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ type: 'spring', stiffness: 200, damping: 18 }}>
+    <motion.div className="success" key={title} initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} role="status">
       <svg className="tick" viewBox="0 0 100 100" aria-hidden="true">
-        <motion.circle cx="50" cy="50" r="44" fill="none" stroke="#22c55e" strokeWidth="7" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 0.6 }} />
-        <motion.path
-          d="M30 52 L45 66 L71 37"
-          fill="none"
-          stroke="#22c55e"
-          strokeWidth="8"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          initial={{ pathLength: 0 }}
-          animate={{ pathLength: 1 }}
-          transition={{ duration: 0.4, delay: 0.55 }}
-        />
+        <motion.circle cx="50" cy="50" r="44" fill="none" stroke={color} strokeWidth="7" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 0.6 }} />
+        {tone === 'ok' && (
+          <motion.path d="M30 52 L45 66 L71 37" fill="none" stroke={color} strokeWidth="8" strokeLinecap="round" strokeLinejoin="round" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 0.4, delay: 0.55 }} />
+        )}
+        {tone === 'bad' && <path d="M50 28 V56 M50 68 V72" stroke={color} strokeWidth="8" strokeLinecap="round" />}
       </svg>
-      <h3>
-        شكرًا <bdi>{name.trim().split(' ')[0]}</bdi>!
-      </h3>
-      <p>تم استلام طلب تسجيلك في دورة «الأستاذ الرقمي». سيتصل بك فريق السبورة قريبًا لتأكيد مقعدك وطريقة الدفع.</p>
-      <button type="button" className="btn btn-ghost" style={{ marginTop: 12 }} onClick={onReset}>
-        تسجيل شخص آخر
-      </button>
+      <h3>{title}</h3>
+      <div className="result-text">{children}</div>
+      {actions && <div className="result-actions">{actions}</div>}
     </motion.div>
   )
 }
@@ -97,7 +102,39 @@ export default function RegisterForm() {
   const [errors, setErrors] = useState({})
   const [touched, setTouched] = useState({})
   const [submitted, setSubmitted] = useState(false)
-  const [state, setState] = useState('idle') // idle | sending | done | error
+  // idle | sending | redirecting | done | done-nopay | verifying | paid | unpaid | error
+  const [state, setState] = useState('idle')
+  const [payName, setPayName] = useState('')
+
+  // Coming back from Slick-Pay: ask our server whether the payment went through
+  useEffect(() => {
+    if (!isPaymentReturn()) return
+    window.history.replaceState(null, '', window.location.pathname + '#register')
+    const pending = readPending()
+    if (!pending?.id) {
+      setState('unpaid')
+      return
+    }
+    setPayName(pending.values?.fullName || '')
+    setValues((v) => ({ ...v, ...pending.values }))
+    setState('verifying')
+    verifyPayment(pending.id)
+      .then(async (paid) => {
+        if (!paid) return setState('unpaid')
+        if (!pending.counted) {
+          markCounted()
+          trackPurchase(pending.values?.profile)
+          await submitPaymentConfirmation({ ...pending.values, invoice: pending.id }).catch(console.error)
+        }
+        clearPending()
+        setState('paid')
+      })
+      .catch((err) => {
+        console.error(err)
+        setState('unpaid')
+      })
+    setTimeout(() => document.getElementById('register')?.scrollIntoView({ block: 'start' }), 300)
+  }, [])
 
   // Show a field's error once it has been left, or after the first submit attempt
   const visible = (name) => (touched[name] || submitted ? errors[name] : undefined)
@@ -138,25 +175,47 @@ export default function RegisterForm() {
       return
     }
     setState('sending')
+    const clean = {
+      ...values,
+      fullName: values.fullName.trim().replace(/\s+/g, ' '),
+      email: values.email.trim().toLowerCase(),
+      phone: normalizePhone(values.phone),
+    }
     try {
-      await submitRegistration({
-        ...values,
-        fullName: values.fullName.trim().replace(/\s+/g, ' '),
-        email: values.email.trim().toLowerCase(),
-        phone: normalizePhone(values.phone),
-      })
-      // Meta Pixel: runs only after FormBold has accepted the registration,
-      // and counts it as a Purchase, the same event as the China page
-      window.fbq?.('track', 'Purchase', {
-        value: PRICE,
-        currency: 'DZD',
-        content_name: 'دورة الأستاذ الرقمي - السبورة',
-        content_category: values.profile,
-      })
-      setState('done')
+      // Always record the registration first, so nobody is lost if payment fails
+      await submitRegistration({ ...clean, payment: PAYMENT_LABEL[values.payment] })
     } catch (err) {
       console.error(err)
       setState('error')
+      return
+    }
+
+    if (values.payment === 'later') {
+      // Meta Pixel: same Purchase event as the China page, after FormBold accepts it
+      trackPurchase(values.profile)
+      setState('done')
+      return
+    }
+
+    // Online: Purchase is only counted once Slick-Pay confirms the payment
+    try {
+      setState('redirecting')
+      await startPayment(clean)
+    } catch (err) {
+      console.error(err)
+      setState('done-nopay')
+    }
+  }
+
+  const retryPayment = async () => {
+    const p = readPending()
+    const v = p?.values || values
+    setState('redirecting')
+    try {
+      await startPayment(v)
+    } catch (err) {
+      console.error(err)
+      setState('done-nopay')
     }
   }
 
@@ -165,8 +224,11 @@ export default function RegisterForm() {
     setErrors({})
     setTouched({})
     setSubmitted(false)
+    clearPending()
     setState('idle')
   }
+
+  const firstName = (payName || values.fullName).trim().split(' ')[0]
 
   const gmailHint =
     values.email && !errors.email && !/@gmail\.com$/i.test(values.email.trim())
@@ -182,7 +244,7 @@ export default function RegisterForm() {
           <span className="kicker">التسجيل</span>
           <h2>احجز مقعدك الآن</h2>
           <p>
-            املأ الاستمارة في أقل من دقيقة، وسيتصل بك فريق السبورة لتأكيد مقعدك وطريقة الدفع. عدد المقاعد {COURSE.seats} فقط، والأولوية حسب ترتيب التسجيل.
+            املأ الاستمارة في أقل من دقيقة، ثم ادفع إلكترونيًا ببطاقة CIB أو الذهبية لتأكيد مقعدك فورًا، أو اختر الدفع لاحقًا. عدد المقاعد {COURSE.seats} فقط، والأولوية حسب ترتيب التسجيل.
           </p>
         </Reveal>
 
@@ -199,7 +261,42 @@ export default function RegisterForm() {
 
           <AnimatePresence mode="wait">
             {state === 'done' ? (
-              <Success name={values.fullName} onReset={reset} />
+              <Result title={`شكرًا ${firstName}!`} actions={<button type="button" className="btn btn-soft" onClick={reset}>تسجيل شخص آخر</button>}>
+                <p>تم استلام طلب تسجيلك في دورة «الأستاذ الرقمي». سيتصل بك فريق السبورة قريبًا لتأكيد مقعدك وطريقة الدفع.</p>
+              </Result>
+            ) : state === 'paid' ? (
+              <Result title={`تم الدفع بنجاح، شكرًا ${firstName}!`} actions={<button type="button" className="btn btn-soft" onClick={reset}>تسجيل شخص آخر</button>}>
+                <p>
+                  مقعدك محجوز في دورة «الأستاذ الرقمي». ستصلك رسالة تأكيد من فريق السبورة، ونلتقي يوم {COURSE.days[0].date} على الساعة 08:30 في {VENUE.name}.
+                </p>
+              </Result>
+            ) : state === 'verifying' || state === 'redirecting' ? (
+              <Result tone="wait" title={state === 'verifying' ? 'جارٍ التحقق من الدفع...' : 'جارٍ تحويلك إلى صفحة الدفع...'}>
+                <p>{state === 'verifying' ? 'لحظات من فضلك، نتأكد من Slick-Pay أن الدفع تمّ.' : 'ستنتقل إلى صفحة Slick-Pay الآمنة لإدخال معلومات بطاقتك.'}</p>
+              </Result>
+            ) : state === 'unpaid' ? (
+              <Result
+                tone="bad"
+                title="لم يكتمل الدفع"
+                actions={
+                  <>
+                    {readPending()?.values && (
+                      <button type="button" className="btn btn-yellow" onClick={retryPayment}>
+                        أعد محاولة الدفع
+                      </button>
+                    )}
+                    <a href={`tel:${PHONES[0].tel}`} className="btn btn-soft">
+                      اتصل بنا: <span dir="ltr">{PHONES[0].display}</span>
+                    </a>
+                  </>
+                }
+              >
+                <p>تسجيلك محفوظ لدينا، لكن لم نتلقَّ تأكيد الدفع. يمكنك إعادة المحاولة الآن، أو الاتصال بنا لإتمام الدفع بطريقة أخرى. إذا اقتُطع المبلغ من بطاقتك فلا تدفع مرة ثانية واتصل بنا.</p>
+              </Result>
+            ) : state === 'done-nopay' ? (
+              <Result tone="wait" title="تم حفظ تسجيلك" actions={<a href={`tel:${PHONES[0].tel}`} className="btn btn-soft">اتصل بنا: <span dir="ltr">{PHONES[0].display}</span></a>}>
+                <p>الدفع الإلكتروني غير متاح في هذه اللحظة. طلب تسجيلك وصلنا، وسيتصل بك فريق السبورة لإتمام الدفع.</p>
+              </Result>
             ) : (
               <motion.form key="form" onSubmit={onSubmit} noValidate exit={{ opacity: 0, y: -20 }} aria-label="استمارة التسجيل في دورة الأستاذ الرقمي">
                 <fieldset>
@@ -251,9 +348,23 @@ export default function RegisterForm() {
 
                 <fieldset>
                   <legend>
-                    <span>3</span> التأكيد
+                    <span>3</span> الدفع والتأكيد
                   </legend>
                   <div className="form-grid">
+                    <Field label="طريقة الدفع" name="payment" required full>
+                      <div className="pay-options" role="radiogroup" id="payment">
+                        {PAYMENTS.map(([val, title, sub]) => (
+                          <label key={val} className={`pay-option${values.payment === val ? ' on' : ''}`}>
+                            <input type="radio" name="payment" value={val} checked={values.payment === val} onChange={onChange} />
+                            <span>
+                              <b>{title}</b>
+                              <small>{sub}</small>
+                            </span>
+                          </label>
+                        ))}
+                      </div>
+                    </Field>
+
                     <Field label="ملاحظات أو أسئلة (اختياري)" name="notes" error={visible('notes')} full hint={`${values.notes.length} / ${NOTES_MAX} حرف`}>
                       <textarea id="notes" name="notes" value={values.notes} onChange={onChange} onBlur={onBlur} maxLength={NOTES_MAX} placeholder="اكتب أي سؤال تريد طرحه" {...aria('notes')} />
                     </Field>
@@ -286,6 +397,8 @@ export default function RegisterForm() {
                     <>
                       <span className="spinner" /> جارٍ الإرسال...
                     </>
+                  ) : values.payment === 'online' ? (
+                    `سجّل وادفع ${formatDA(PRICE)}`
                   ) : (
                     'أرسل طلب التسجيل'
                   )}
