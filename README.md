@@ -4,19 +4,22 @@ Landing page and registration form for **Esaboura (السبورة)**'s in-person
 
 ## Sections
 
-1. Hero: course title, AI "screen" with the tools taught, key chips (dates, 12 hours, 18,000 DA instead of 22,000 DA, 14 seats)
-2. Key facts, course intro, the 7 objectives, 70% practice / 30% theory bar
-3. The 7 course axes and their tools
-4. Two-day timetable
-5. Gallery of past editions (see below)
-6. Trainer, target audience and what to bring
-7. Gifts: Gemini subscription, Canva Pro, QuillBot, Mystylus, Aithor, 3 recorded courses, outputs
-8. Price and a 14-seat grid
-9. Location: embedded Google map + button to the venue link
-10. Registration form with validation
-11. Footer and a floating call button
+The page has its own layout. From the China page it keeps only the Esaboura brand: colours, fonts and button style.
 
-All content comes from the course technical card (البطاقة التقنية). Dates, price, seats, venue and phone numbers live in `src/config.js`.
+1. Header and hero: course title, price, a countdown to the first day, and a bar with the date, time, place and seats
+2. The tools taught in the course
+3. What you'll learn: pick one of the 7 axes to see its content, its objective, its tools and when it's taught
+4. Timetable, with a tab for each day
+5. Photos from past editions (see below)
+6. Trainer, who the course is for, and what to bring
+7. Gifts, shown as tables, plus the recorded courses and what you take away
+8. Price ticket with the number of seats left
+9. Location: map, address and a Google Maps button
+10. FAQ, answered from the technical card
+11. Registration form in 3 steps
+12. Footer with phone numbers, and a bar fixed to the bottom of phone screens with the price, a register button and a call button
+
+Text is dark on light backgrounds (or white on dark purple), at least 18px, with no blurred or see-through text, so everything stays easy to read. Course content lives in `src/data.js`; dates, price, seats, venue and phones in `src/config.js`.
 
 ## Getting started
 

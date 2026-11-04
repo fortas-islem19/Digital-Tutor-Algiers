@@ -17,6 +17,8 @@ export const COURSE = {
     { label: 'اليوم الثاني', date: 'السبت 21 نوفمبر 2026', theme: 'التلعيب والتقويم' },
   ],
   hours: 'من 08:30 إلى 16:00',
+  // Start of day one, used by the countdown (Algiers time, UTC+1)
+  startsAt: '2026-11-20T08:30:00+01:00',
   totalHours: 12,
   seats: 14,
   trainer: 'أ.د. عبد الفتاح تباني',
