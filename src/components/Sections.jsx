@@ -234,7 +234,7 @@ export function Program() {
   return (
     <section className="sec sec-tint" id="program">
       <div className="wrap">
-        <SectionTitle kicker="البرنامج الزمني" title="يومان، 12 ساعة تكوين" text={`6 ساعات في اليوم، ${COURSE.hours}، مع استراحات.`} />
+        <SectionTitle kicker="البرنامج الزمني" title="يومان، 12 ساعة تكوين" text={`6 ساعات في اليوم، ${COURSE.hours}، مع استراحة قهوة.`} />
         <div className="day-tabs" role="tablist">
           {COURSE.days.map((d, i) => (
             <button key={d.label} type="button" role="tab" aria-selected={day === i} className={day === i ? 'on' : ''} onClick={() => setDay(i)}>
