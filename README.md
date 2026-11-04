@@ -43,6 +43,10 @@ Validation (in `src/lib/validate.js`):
 
 Submissions go to FormBold as JSON (Arabic field names). The form ID is in `src/config.js` (`FORMBOLD_FORM_ID`); it's currently the same form as the China page, and every submission includes `المصدر: صفحة دورة الأستاذ الرقمي` so they're easy to tell apart. To keep them separate, create a new FormBold form and put its ID there, or set `VITE_FORM_ENDPOINT` in `.env`.
 
+## Meta Pixel
+
+`index.html` loads the same Meta Pixel as the China page (ID `2183132719278372`) and tracks `PageView`. When FormBold confirms a registration, the form also sends a `Purchase` event (value 18,000 DZD, with the chosen status as `content_category`). If FormBold returns an error, no Purchase is sent.
+
 ## Updating for a new edition
 
 Edit `COURSE`, `PRICE`, `OLD_PRICE` and `SEATS_TAKEN` in `src/config.js`. `SEATS_TAKEN` drives the red seats in the seat grid, so update it as registrations come in.

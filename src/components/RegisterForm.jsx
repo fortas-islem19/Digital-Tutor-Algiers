@@ -164,8 +164,14 @@ export default function RegisterForm() {
         email: values.email.trim().toLowerCase(),
         phone: normalizePhone(values.phone),
       })
-      // Meta Pixel (if the page has one): count a registration as a Lead
-      window.fbq?.('track', 'Lead', { value: PRICE, currency: 'DZD', content_name: 'الأستاذ الرقمي', content_category: values.profile })
+      // Meta Pixel: runs only after FormBold has accepted the registration,
+      // and counts it as a Purchase, the same event as the China page
+      window.fbq?.('track', 'Purchase', {
+        value: PRICE,
+        currency: 'DZD',
+        content_name: 'دورة الأستاذ الرقمي - السبورة',
+        content_category: values.profile,
+      })
       setState('done')
     } catch (err) {
       console.error(err)
