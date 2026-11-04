@@ -4,7 +4,7 @@
 export const FORMBOLD_FORM_ID = '3Kqnp'
 
 export const FORM_ENDPOINT =
-  import.meta.env.VITE_FORM_ENDPOINT || (FORMBOLD_FORM_ID ? `https://formbold.com/s/${FORMBOLD_FORM_ID}` : '')
+  import.meta.env?.VITE_FORM_ENDPOINT || (FORMBOLD_FORM_ID ? `https://formbold.com/s/${FORMBOLD_FORM_ID}` : '')
 
 // Course details from the technical card (البطاقة التقنية — دورة الأستاذ الرقمي)
 export const COURSE = {
