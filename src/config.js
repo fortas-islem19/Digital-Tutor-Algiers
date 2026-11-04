@@ -1,7 +1,7 @@
 // FormBold form ID: Dashboard → your form → Settings → Integration (the part after formbold.com/s/).
-// Currently the same form as the China page; every submission carries a "المصدر" field so the two are easy to tell apart.
+// Digital Tutor's own form (the China page uses a separate one).
 // VITE_FORM_ENDPOINT in .env overrides this if you switch to another service.
-export const FORMBOLD_FORM_ID = '9m52W'
+export const FORMBOLD_FORM_ID = '3Kqnp'
 
 export const FORM_ENDPOINT =
   import.meta.env.VITE_FORM_ENDPOINT || (FORMBOLD_FORM_ID ? `https://formbold.com/s/${FORMBOLD_FORM_ID}` : '')

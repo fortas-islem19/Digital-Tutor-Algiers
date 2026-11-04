@@ -41,7 +41,7 @@ Validation (in `src/lib/validate.js`):
 - Consent: required
 - Errors show when a field is left or on submit, the first invalid field gets focus, and a hidden honeypot field drops bot submissions.
 
-Submissions go to FormBold as JSON (Arabic field names). The form ID is in `src/config.js` (`FORMBOLD_FORM_ID`); it's currently the same form as the China page, and every submission includes `المصدر: صفحة دورة الأستاذ الرقمي` so they're easy to tell apart. To keep them separate, create a new FormBold form and put its ID there, or set `VITE_FORM_ENDPOINT` in `.env`.
+Submissions go to FormBold as JSON (Arabic field names). The form ID is in `src/config.js` (`FORMBOLD_FORM_ID = '3Kqnp'`, i.e. `https://formbold.com/s/3Kqnp`), a form of its own, separate from the China page. To use another service, set `VITE_FORM_ENDPOINT` in `.env`.
 
 ## Meta Pixel
 
