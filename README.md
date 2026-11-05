@@ -57,7 +57,7 @@ Payment details, the Slick-Pay link and the WhatsApp number are in `src/config.j
 
 ## Meta Pixel
 
-`index.html` loads the same Meta Pixel as the China page (ID `2183132719278372`) and tracks `PageView`. `Purchase` (value 18,000 DZD, with the chosen status as `content_category`) is sent once per registration, when FormBold accepts it, whichever payment method is chosen.
+`index.html` loads the course's own Meta Pixel (ID `1674432380905103`) and tracks `PageView`. `Purchase` (value 18,000 DZD, with the chosen status as `content_category`) is sent once per registration, when FormBold accepts it, whichever payment method is chosen.
 
 ## Updating for a new edition
 
