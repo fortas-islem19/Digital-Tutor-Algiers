@@ -43,24 +43,3 @@ export async function submitRegistration(data) {
   })
   if (!res.ok) throw new Error(`Request failed with status ${res.status}`)
 }
-
-// Second FormBold entry sent once Slick-Pay confirms the payment
-export async function submitPaymentConfirmation(data) {
-  if (!FORM_ENDPOINT) return
-  const payload = {
-    'تأكيد الدفع': 'تم الدفع إلكترونيًا عبر Slick-Pay',
-    'رقم الفاتورة Slick-Pay': String(data.invoice),
-    'الاسم الكامل': data.fullName,
-    'رقم الهاتف (واتساب)': data.phone,
-    'البريد الإلكتروني (Gmail)': data.email,
-    'الدورة': 'الأستاذ الرقمي: الذكاء الاصطناعي في التعليم — الطبعة الثانية',
-    'تاريخ الإرسال': new Date().toISOString(),
-    'المصدر': 'صفحة دورة الأستاذ الرقمي - تأكيد الدفع',
-  }
-  const res = await fetch(FORM_ENDPOINT, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-    body: JSON.stringify(payload),
-  })
-  if (!res.ok) throw new Error(`Request failed with status ${res.status}`)
-}

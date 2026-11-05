@@ -46,31 +46,18 @@ Validation (in `src/lib/validate.js`):
 
 Submissions go to FormBold as JSON (Arabic field names). The form ID is in `src/config.js` (`FORMBOLD_FORM_ID = '3Kqnp'`, i.e. `https://formbold.com/s/3Kqnp`), a form of its own, separate from the China page. To use another service, set `VITE_FORM_ENDPOINT` in `.env`.
 
-## Online payment (Slick-Pay)
+## Payment
 
-People can pay the course fee by CIB or Edahabia card through [Slick-Pay](https://slick-pay.com), or choose to pay later.
+The form's last step asks how the person will pay. Both options first send the registration to FormBold, with the chosen method (`طريقة الدفع`).
 
-How it works:
+- **Online (الدفع الإلكتروني):** after registering, the person is sent to a Slick-Pay payment link (CIB / Edahabia).
+- **Post office transfer (الدفع عبر البريد):** the CCP and BaridiMob details appear in the form when this option is chosen, and again on the thank-you screen. Each value has a copy button. The person is asked to send a photo of the receipt on WhatsApp, and a button opens WhatsApp with a ready-made message.
 
-1. The form first sends the registration to FormBold, with the chosen payment method.
-2. For online payment, the page calls `api/pay.js` (a Vercel serverless function). It checks the form again and creates a Slick-Pay merchant invoice for the fixed price in `src/config.js` (the browser cannot change the amount), then sends the person to the Slick-Pay payment page.
-3. Slick-Pay sends them back to `/?payment=return`. The page calls `api/verify.js`, which asks Slick-Pay whether the invoice is paid.
-4. If it is paid: the person sees a confirmation, FormBold receives a second entry ("تأكيد الدفع" with the Slick-Pay invoice number), and the Meta Pixel sends `Purchase` once. If not: the person sees a "payment not completed" message with a retry button and the phone number.
-
-Setup in Vercel → digital-tutor-algiers → Settings → Environment Variables:
-
-| Name | Value |
-| --- | --- |
-| `SLICKPAY_PUBLIC_KEY` | your API key from the Slick-Pay merchant dashboard |
-| `SLICKPAY_SANDBOX` | `1` to test with Slick-Pay's test server, remove it (or set `0`) for real payments |
-
-Redeploy after adding them. Until `SLICKPAY_PUBLIC_KEY` is set, choosing online payment still saves the registration and tells the person the team will call them.
-
-The key is only read by the server functions in `api/`; never put it in `src/` or in a `VITE_` variable, or it would be visible to anyone.
+Payment details, the Slick-Pay link and the WhatsApp number are in `src/config.js` (`PAYMENT`, `WHATSAPP`). The page doesn't check payments itself: confirm them from the Slick-Pay dashboard and the receipts sent on WhatsApp.
 
 ## Meta Pixel
 
-`index.html` loads the same Meta Pixel as the China page (ID `2183132719278372`) and tracks `PageView`. `Purchase` (value 18,000 DZD, with the chosen status as `content_category`) is sent once per registration: for "pay later", when FormBold accepts the registration; for online payment, only when Slick-Pay confirms the payment.
+`index.html` loads the same Meta Pixel as the China page (ID `2183132719278372`) and tracks `PageView`. `Purchase` (value 18,000 DZD, with the chosen status as `content_category`) is sent once per registration, when FormBold accepts it, whichever payment method is chosen.
 
 ## Updating for a new edition
 
