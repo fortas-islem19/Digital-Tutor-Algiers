@@ -46,3 +46,14 @@ export const PHONES = [
   { display: '0676 10 13 71', tel: '+213676101371' },
   { display: '0561 46 84 57', tel: '+213561468457' },
 ]
+
+// Payment details
+export const PAYMENT = {
+  // Slick-Pay payment link (CIB / Edahabia), created in the Slick-Pay dashboard
+  slickLink: 'https://www.slick-pay.com/slicklink/details/SLK-092632W4FES',
+  ccp: { account: '6650093', key: '11', holder: 'Abdeslam Hetatache' },
+  baridimobRib: '00799999000665009314',
+}
+
+// Number that receives payment receipts on WhatsApp
+export const WHATSAPP = { display: '0676 10 13 71', wa: '213676101371' }

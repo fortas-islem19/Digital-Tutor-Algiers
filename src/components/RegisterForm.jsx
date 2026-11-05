@@ -1,10 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { submitPaymentConfirmation, submitRegistration } from '../lib/submit'
-import { clearPending, isPaymentReturn, markCounted, readPending, startPayment, verifyPayment } from '../lib/payment'
+import { submitRegistration } from '../lib/submit'
 import { normalizePhone, validate } from '../lib/validate'
 import { WILAYAS } from '../lib/wilayas'
-import { COURSE, PHONES, PRICE, VENUE, formatDA } from '../config'
+import { COURSE, PAYMENT, PHONES, PRICE, VENUE, WHATSAPP, formatDA } from '../config'
 import { Reveal } from './Motion'
 
 const initial = {
@@ -27,10 +26,10 @@ const LEVELS = ['مبتدئ', 'متوسط', 'متقدم']
 const LAPTOP = ['نعم', 'لا، أحتاج حلًا']
 const NOTES_MAX = 500
 const PAYMENTS = [
-  ['online', 'الدفع الإلكتروني الآن', 'بطاقة CIB أو الذهبية، عبر Slick-Pay'],
-  ['later', 'الدفع لاحقًا', 'يتصل بك فريق السبورة لتأكيد طريقة الدفع'],
+  ['online', 'الدفع الإلكتروني', 'بطاقة CIB أو الذهبية، عبر رابط Slick-Pay'],
+  ['transfer', 'الدفع عبر البريد', 'تحويل إلى حساب CCP أو بريدي موب'],
 ]
-const PAYMENT_LABEL = { online: 'دفع إلكتروني (Slick-Pay)', later: 'الدفع لاحقًا' }
+const PAYMENT_LABEL = { online: 'دفع إلكتروني (رابط Slick-Pay)', transfer: 'تحويل CCP / بريدي موب' }
 
 const trackPurchase = (category) =>
   window.fbq?.('track', 'Purchase', {
@@ -79,6 +78,45 @@ function Choices({ name, options, value, onChange, error }) {
   )
 }
 
+function CopyRow({ label, value, display }) {
+  const [copied, setCopied] = useState(false)
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(value)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 1800)
+    } catch {
+      // clipboard blocked: the value stays visible to copy by hand
+    }
+  }
+  return (
+    <div className="copy-row">
+      <span className="copy-label">{label}</span>
+      <b dir="ltr">{display || value}</b>
+      <button type="button" onClick={copy} aria-label={`نسخ ${label}`}>
+        {copied ? 'تم النسخ ✓' : 'نسخ'}
+      </button>
+    </div>
+  )
+}
+
+function TransferDetails() {
+  return (
+    <div className="pay-details">
+      <h4>للدفع عن طريق الحساب البريدي (CCP)</h4>
+      <CopyRow label="رقم الحساب" value={PAYMENT.ccp.account} />
+      <CopyRow label="المفتاح (Clé)" value={PAYMENT.ccp.key} />
+      <CopyRow label="الاسم" value={PAYMENT.ccp.holder} />
+      <h4>للدفع عن طريق بريدي موب</h4>
+      <CopyRow label="RIB" value={PAYMENT.baridimobRib} />
+      <p className="pay-amount">
+        المبلغ: <b>{formatDA(PRICE)}</b>
+      </p>
+      <p className="pay-note">لا تنسَ تصوير الوصل وإرساله لنا عبر واتساب للتحقق وتأكيد مقعدك.</p>
+    </div>
+  )
+}
+
 function Result({ tone = 'ok', title, children, actions }) {
   const color = tone === 'ok' ? '#15803d' : tone === 'wait' ? '#8a0bd6' : '#c81e0a'
   return (
@@ -102,40 +140,8 @@ export default function RegisterForm() {
   const [errors, setErrors] = useState({})
   const [touched, setTouched] = useState({})
   const [submitted, setSubmitted] = useState(false)
-  // idle | sending | redirecting | done | done-nopay | verifying | paid | unpaid | error
+  // idle | sending | redirecting | done | error
   const [state, setState] = useState('idle')
-  const [payName, setPayName] = useState('')
-
-  // Coming back from Slick-Pay: ask our server whether the payment went through
-  useEffect(() => {
-    if (!isPaymentReturn()) return
-    window.history.replaceState(null, '', window.location.pathname + '#register')
-    const pending = readPending()
-    if (!pending?.id) {
-      setState('unpaid')
-      return
-    }
-    setPayName(pending.values?.fullName || '')
-    setValues((v) => ({ ...v, ...pending.values }))
-    setState('verifying')
-    verifyPayment(pending.id)
-      .then(async (paid) => {
-        if (!paid) return setState('unpaid')
-        if (!pending.counted) {
-          markCounted()
-          trackPurchase(pending.values?.profile)
-          await submitPaymentConfirmation({ ...pending.values, invoice: pending.id }).catch(console.error)
-        }
-        clearPending()
-        setState('paid')
-      })
-      .catch((err) => {
-        console.error(err)
-        setState('unpaid')
-      })
-    setTimeout(() => document.getElementById('register')?.scrollIntoView({ block: 'start' }), 300)
-  }, [])
-
   // Show a field's error once it has been left, or after the first submit attempt
   const visible = (name) => (touched[name] || submitted ? errors[name] : undefined)
 
@@ -190,33 +196,16 @@ export default function RegisterForm() {
       return
     }
 
-    if (values.payment === 'later') {
-      // Meta Pixel: same Purchase event as the China page, after FormBold accepts it
-      trackPurchase(values.profile)
-      setState('done')
+    // Meta Pixel: Purchase after FormBold accepts the registration, as on the China page
+    trackPurchase(values.profile)
+
+    if (values.payment === 'online') {
+      setState('redirecting')
+      // Give the pixel a moment to send before leaving the page
+      setTimeout(() => window.location.assign(PAYMENT.slickLink), 600)
       return
     }
-
-    // Online: Purchase is only counted once Slick-Pay confirms the payment
-    try {
-      setState('redirecting')
-      await startPayment(clean)
-    } catch (err) {
-      console.error(err)
-      setState('done-nopay')
-    }
-  }
-
-  const retryPayment = async () => {
-    const p = readPending()
-    const v = p?.values || values
-    setState('redirecting')
-    try {
-      await startPayment(v)
-    } catch (err) {
-      console.error(err)
-      setState('done-nopay')
-    }
+    setState('done')
   }
 
   const reset = () => {
@@ -224,11 +213,10 @@ export default function RegisterForm() {
     setErrors({})
     setTouched({})
     setSubmitted(false)
-    clearPending()
     setState('idle')
   }
 
-  const firstName = (payName || values.fullName).trim().split(' ')[0]
+  const firstName = values.fullName.trim().split(' ')[0]
 
   const gmailHint =
     values.email && !errors.email && !/@gmail\.com$/i.test(values.email.trim())
@@ -244,7 +232,7 @@ export default function RegisterForm() {
           <span className="kicker">التسجيل</span>
           <h2>احجز مقعدك الآن</h2>
           <p>
-            املأ الاستمارة في أقل من دقيقة، ثم ادفع إلكترونيًا ببطاقة CIB أو الذهبية لتأكيد مقعدك فورًا، أو اختر الدفع لاحقًا. عدد المقاعد {COURSE.seats} فقط، والأولوية حسب ترتيب التسجيل.
+            املأ الاستمارة في أقل من دقيقة، ثم ادفع إلكترونيًا ببطاقة CIB أو الذهبية، أو بتحويل إلى حساب CCP أو بريدي موب. عدد المقاعد {COURSE.seats} فقط، والأولوية حسب ترتيب التسجيل.
           </p>
         </Reveal>
 
@@ -261,41 +249,25 @@ export default function RegisterForm() {
 
           <AnimatePresence mode="wait">
             {state === 'done' ? (
-              <Result title={`شكرًا ${firstName}!`} actions={<button type="button" className="btn btn-soft" onClick={reset}>تسجيل شخص آخر</button>}>
-                <p>تم استلام طلب تسجيلك في دورة «الأستاذ الرقمي». سيتصل بك فريق السبورة قريبًا لتأكيد مقعدك وطريقة الدفع.</p>
-              </Result>
-            ) : state === 'paid' ? (
-              <Result title={`تم الدفع بنجاح، شكرًا ${firstName}!`} actions={<button type="button" className="btn btn-soft" onClick={reset}>تسجيل شخص آخر</button>}>
-                <p>
-                  مقعدك محجوز في دورة «الأستاذ الرقمي». ستصلك رسالة تأكيد من فريق السبورة، ونلتقي يوم {COURSE.days[0].date} على الساعة 08:30 في {VENUE.name}.
-                </p>
-              </Result>
-            ) : state === 'verifying' || state === 'redirecting' ? (
-              <Result tone="wait" title={state === 'verifying' ? 'جارٍ التحقق من الدفع...' : 'جارٍ تحويلك إلى صفحة الدفع...'}>
-                <p>{state === 'verifying' ? 'لحظات من فضلك، نتأكد من Slick-Pay أن الدفع تمّ.' : 'ستنتقل إلى صفحة Slick-Pay الآمنة لإدخال معلومات بطاقتك.'}</p>
-              </Result>
-            ) : state === 'unpaid' ? (
               <Result
-                tone="bad"
-                title="لم يكتمل الدفع"
+                title={`شكرًا ${firstName}، تم تسجيلك!`}
                 actions={
                   <>
-                    {readPending()?.values && (
-                      <button type="button" className="btn btn-yellow" onClick={retryPayment}>
-                        أعد محاولة الدفع
-                      </button>
-                    )}
-                    <a href={`tel:${PHONES[0].tel}`} className="btn btn-soft">
-                      اتصل بنا: <span dir="ltr">{PHONES[0].display}</span>
+                    <a href={`https://wa.me/${WHATSAPP.wa}?text=${encodeURIComponent(`السلام عليكم، هذا وصل الدفع لدورة الأستاذ الرقمي باسم ${values.fullName.trim()}`)}`} target="_blank" rel="noopener noreferrer" className="btn btn-yellow">
+                      أرسل الوصل عبر واتساب
                     </a>
+                    <button type="button" className="btn btn-soft" onClick={reset}>
+                      تسجيل شخص آخر
+                    </button>
                   </>
                 }
               >
-                <p>تسجيلك محفوظ لدينا، لكن لم نتلقَّ تأكيد الدفع. يمكنك إعادة المحاولة الآن، أو الاتصال بنا لإتمام الدفع بطريقة أخرى. إذا اقتُطع المبلغ من بطاقتك فلا تدفع مرة ثانية واتصل بنا.</p>
+                <p>بقيت خطوة واحدة لتأكيد مقعدك: ادفع {formatDA(PRICE)} بإحدى الطريقتين، ثم أرسل لنا صورة الوصل.</p>
+                <TransferDetails />
               </Result>
-            ) : state === 'done-nopay' ? (
-              <Result tone="wait" title="تم حفظ تسجيلك" actions={<a href={`tel:${PHONES[0].tel}`} className="btn btn-soft">اتصل بنا: <span dir="ltr">{PHONES[0].display}</span></a>}>
-                <p>الدفع الإلكتروني غير متاح في هذه اللحظة. طلب تسجيلك وصلنا، وسيتصل بك فريق السبورة لإتمام الدفع.</p>
+            ) : state === 'redirecting' ? (
+              <Result tone="wait" title="تم تسجيلك، جارٍ تحويلك إلى صفحة الدفع..." actions={<a href={PAYMENT.slickLink} className="btn btn-yellow">افتح صفحة الدفع</a>}>
+                <p>ستنتقل الآن إلى صفحة Slick-Pay لإتمام الدفع ببطاقة CIB أو الذهبية. إذا لم تنتقل تلقائيًا، اضغط على الزر.</p>
               </Result>
             ) : (
               <motion.form key="form" onSubmit={onSubmit} noValidate exit={{ opacity: 0, y: -20 }} aria-label="استمارة التسجيل في دورة الأستاذ الرقمي">
@@ -363,6 +335,7 @@ export default function RegisterForm() {
                           </label>
                         ))}
                       </div>
+                      {values.payment === 'transfer' && <TransferDetails />}
                     </Field>
 
                     <Field label="ملاحظات أو أسئلة (اختياري)" name="notes" error={visible('notes')} full hint={`${values.notes.length} / ${NOTES_MAX} حرف`}>
@@ -398,7 +371,7 @@ export default function RegisterForm() {
                       <span className="spinner" /> جارٍ الإرسال...
                     </>
                   ) : values.payment === 'online' ? (
-                    `سجّل وادفع ${formatDA(PRICE)}`
+                    `سجّل وانتقل إلى الدفع (${formatDA(PRICE)})`
                   ) : (
                     'أرسل طلب التسجيل'
                   )}
