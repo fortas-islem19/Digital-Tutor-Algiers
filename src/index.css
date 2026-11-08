@@ -1754,3 +1754,233 @@ legend span {
     grid-column: 1 / -1;
   }
 }
+
+/* ---------- Groups (أفواج) ---------- */
+.hero-notice {
+  padding: 8px 18px;
+  border-radius: 12px;
+  background: #fff;
+  color: var(--purple-900);
+  font-weight: 800;
+}
+
+.groups {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+}
+
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 22px;
+  border-radius: 22px;
+  background: #fff;
+  border: 2px solid var(--purple-500);
+  box-shadow: var(--shadow);
+}
+
+.group.is-full {
+  border-color: var(--line);
+  background: #f6f4f8;
+  box-shadow: none;
+}
+
+.group-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.group h3 {
+  font-size: 1.5rem;
+  color: var(--purple-900);
+}
+
+.status {
+  flex: none;
+  padding: 3px 12px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.status.open {
+  background: #dcfce7;
+  color: var(--green);
+}
+
+.status.closed {
+  background: #fde8e6;
+  color: var(--red);
+}
+
+.group-dates {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1.35rem;
+  color: var(--purple-700);
+}
+
+.group.is-full .group-dates {
+  color: var(--text-2);
+  text-decoration: line-through;
+}
+
+.group-days {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.group-seats {
+  margin-top: auto;
+  font-weight: 700;
+}
+
+.group-seats b {
+  color: var(--red);
+  font-size: 1.2rem;
+}
+
+.group-closed {
+  margin-top: auto;
+  font-weight: 700;
+  color: var(--red);
+}
+
+.seat-group + .seat-group {
+  margin-top: 10px;
+}
+
+.seats-line {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 6px;
+  font-weight: 700;
+}
+
+.seats-line small {
+  color: var(--text-2);
+  font-weight: 500;
+}
+
+.seats-line b {
+  color: var(--red);
+  font-size: 1.25rem;
+}
+
+/* Group choice in the form */
+.group-options {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.group-option {
+  position: relative;
+  display: block;
+  cursor: pointer;
+}
+
+.group-option input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.group-option > span {
+  display: grid;
+  gap: 2px;
+  height: 100%;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 2px solid #cfc0e0;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.group-option b {
+  font-size: 1.1rem;
+  color: var(--purple-900);
+}
+
+.go-dates {
+  font-weight: 700;
+}
+
+.go-left {
+  color: var(--green);
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.go-full {
+  color: var(--red);
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.group-option:hover > span {
+  border-color: var(--purple-500);
+}
+
+.group-option.on > span {
+  border-color: var(--purple-500);
+  background: var(--purple-50);
+  box-shadow: inset 0 0 0 1px var(--purple-500);
+}
+
+.group-option.off {
+  cursor: not-allowed;
+}
+
+.group-option.off > span {
+  background: #f6f4f8;
+  border-color: var(--line);
+}
+
+.group-option.off .go-dates {
+  text-decoration: line-through;
+  color: var(--text-2);
+}
+
+.group-option input:focus-visible + span {
+  outline: 3px solid var(--purple-500);
+  outline-offset: 2px;
+}
+
+.field.invalid .group-option:not(.off) > span {
+  border-color: var(--red);
+}
+
+@media (max-width: 860px) {
+  .groups {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .group-options {
+    grid-template-columns: 1fr;
+  }
+}
+
+.go-days {
+  color: var(--text-2);
+  font-size: 0.95rem;
+}
+
+.group-option.off .go-days {
+  text-decoration: line-through;
+}
+
+.seats-line > b {
+  font-size: 1.05rem;
+  color: var(--red);
+  white-space: nowrap;
+}

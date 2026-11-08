@@ -32,6 +32,7 @@ export function validate(v) {
   if (!v.level) e.level = 'يرجى اختيار المستوى'
   if (!v.laptop) e.laptop = 'يرجى الإجابة'
   if (v.notes.length > 500) e.notes = 'الحد الأقصى 500 حرف'
+  if ('group' in v && !v.group) e.group = 'يرجى اختيار الفوج'
   if (!v.consent) e.consent = 'يجب الموافقة للمتابعة'
   return e
 }

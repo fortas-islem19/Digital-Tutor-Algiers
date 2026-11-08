@@ -59,6 +59,22 @@ Payment details, the Slick-Pay link and the WhatsApp number are in `src/config.j
 
 `index.html` loads the course's own Meta Pixel (ID `1674432380905103`) and tracks `PageView`. `Purchase` (value 18,000 DZD, with the chosen status as `content_category`) is sent once per registration, when FormBold accepts it, whichever payment method is chosen.
 
+## Groups (أفواج)
+
+The course runs in several groups with the same programme, trainer, venue and price. They are listed in `GROUPS` in `src/config.js`:
+
+| Group | Dates | Status |
+| --- | --- | --- |
+| الفوج الأول | 20 – 21 November 2026 | full (registration closed) |
+| الفوج الثاني | Thursday 3 – Friday 4 December 2026 | open |
+| الفوج الثالث | Saturday 5 – Sunday 6 December 2026 | open |
+
+- To close a group, set `full: true`. It stays on the page marked «مكتمل» and can't be picked in the form.
+- To show seats left, update `seatsTaken` (14 seats per group, `COURSE.seats`). With 0 the page says «14 مقعدًا فقط»; once seats are taken it says «بقي X مقاعد».
+- To add a group, copy an entry and change `id`, `name`, `dates`, `days` and `startsAt`.
+
+The groups section, the hero, the countdown (to the next open group), the price ticket, the location and the form all read from this list. The form requires a group; FormBold receives it as `الفوج`, and the Meta Pixel `Purchase` event names it in `content_name`.
+
 ## Updating for a new edition
 
 Edit `COURSE`, `PRICE`, `OLD_PRICE` and `SEATS_TAKEN` in `src/config.js`. `SEATS_TAKEN` drives the red seats in the seat grid, so update it as registrations come in.

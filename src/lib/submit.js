@@ -2,6 +2,7 @@ import { FORM_ENDPOINT } from '../config'
 
 // Readable field names, so the emails FormBold sends are easy to read
 const LABELS = {
+  group: 'الفوج',
   fullName: 'الاسم الكامل',
   phone: 'رقم الهاتف (واتساب)',
   email: 'البريد الإلكتروني (Gmail)',
