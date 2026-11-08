@@ -11,16 +11,16 @@ export const COURSE = {
   title: 'الأستاذ الرقمي',
   subtitle: 'الذكاء الاصطناعي في التعليم',
   edition: 'الطبعة الثانية',
-  dates: '20 – 21 نوفمبر 2026',
+  // Short summary of the open groups' dates, used in the hero and form header
+  dates: '3 – 6 ديسمبر 2026',
+  // The two days of the programme (same for every group)
   days: [
-    { label: 'اليوم الأول', date: 'الجمعة 20 نوفمبر 2026', theme: 'المحتوى والوسائط' },
-    { label: 'اليوم الثاني', date: 'السبت 21 نوفمبر 2026', theme: 'التلعيب والتقويم' },
+    { label: 'اليوم الأول', theme: 'المحتوى والوسائط' },
+    { label: 'اليوم الثاني', theme: 'التلعيب والتقويم' },
   ],
   hours: 'من 08:30 إلى 16:00',
-  // Start of day one, used by the countdown (Algiers time, UTC+1)
-  startsAt: '2026-11-20T08:30:00+01:00',
   totalHours: 12,
-  seats: 14,
+  seats: 14, // per group
   trainer: 'أ.د. عبد الفتاح تباني',
   trainerRole: 'أستاذ محاضر بجامعة سطيف 1، مدرب في تكنولوجيا المعلومات والتحول الرقمي',
 }
@@ -28,8 +28,49 @@ export const COURSE = {
 export const PRICE = 18000
 export const OLD_PRICE = 22000
 
-// Seats already booked, shown in the seat grid. Update it as registrations come in.
-export const SEATS_TAKEN = 9
+// Course groups (أفواج). Same programme, venue and price for every group.
+// Set full: true to close registration for a group; seatsTaken drives the "seats left" counters.
+// startsAt (Algiers time, UTC+1) is used by the countdown to the next open group.
+export const GROUPS = [
+  {
+    id: 'g1',
+    name: 'الفوج الأول',
+    dates: '20 – 21 نوفمبر 2026',
+    days: ['الجمعة 20 نوفمبر', 'السبت 21 نوفمبر'],
+    startsAt: '2026-11-20T08:30:00+01:00',
+    full: true,
+    seatsTaken: 14,
+  },
+  {
+    id: 'g2',
+    name: 'الفوج الثاني',
+    dates: '3 – 4 ديسمبر 2026',
+    days: ['الخميس 3 ديسمبر', 'الجمعة 4 ديسمبر'],
+    startsAt: '2026-12-03T08:30:00+01:00',
+    full: false,
+    seatsTaken: 0,
+  },
+  {
+    id: 'g3',
+    name: 'الفوج الثالث',
+    dates: '5 – 6 ديسمبر 2026',
+    days: ['السبت 5 ديسمبر', 'الأحد 6 ديسمبر'],
+    startsAt: '2026-12-05T08:30:00+01:00',
+    full: false,
+    seatsTaken: 0,
+  },
+]
+
+export const OPEN_GROUPS = GROUPS.filter((g) => !g.full)
+export const seatsLeft = (g) => (g.full ? 0 : Math.max(COURSE.seats - g.seatsTaken, 0))
+// Seat text for an open group: "14 مقعدًا فقط" until someone books, then "بقي X مقاعد"
+export const seatsText = (g) => {
+  const left = seatsLeft(g)
+  if (g.full || left === 0) return 'مكتمل'
+  if (g.seatsTaken <= 0) return `${COURSE.seats} مقعدًا فقط`
+  return left <= 10 ? `بقي ${left} مقاعد` : `بقي ${left} مقعدًا`
+}
+export const groupLabel = (g) => `${g.name} (${g.dates})`
 
 export const VENUE = {
   name: 'Coffice — المحمدية مول',

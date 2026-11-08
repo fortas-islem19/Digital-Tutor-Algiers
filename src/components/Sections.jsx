@@ -2,12 +2,20 @@ import { useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import logoWhite from '../assets/logo-mark-white.png'
 import logoFull from '../assets/logo-full-purple.png'
-import { COURSE, OLD_PRICE, PHONES, PRICE, SEATS_TAKEN, VENUE, formatDA } from '../config'
+import { COURSE, GROUPS, OLD_PRICE, OPEN_GROUPS, PHONES, PRICE, VENUE, formatDA, seatsLeft, seatsText } from '../config'
 import { AUDIENCE, AXES, FAQ, GEMINI, OUTPUTS, RECORDED, REQUIREMENTS, SCHEDULE, TOOL_GIFTS } from '../data'
 import { CalendarIcon, CameraIcon, CapIcon, CheckIcon, ClockIcon, GiftIcon, PhoneIcon, PinIcon, PlayIcon, UsersIcon } from './Icons'
 import { Reveal } from './Motion'
 
-const seatsLeft = Math.max(COURSE.seats - SEATS_TAKEN, 0)
+const openDates = OPEN_GROUPS.map((g) => g.dates.replace(' 2026', '')).join(' أو ')
+// Compact form for tight spots, e.g. "3 – 4 أو 5 – 6 ديسمبر"
+const shortDates = openDates.replace(/ ديسمبر أو /g, ' أو ')
+
+// Lets any "register in this group" button pre-select the group in the form
+export function pickGroup(id) {
+  window.dispatchEvent(new CustomEvent('pick-group', { detail: id }))
+  document.getElementById('register')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
 
 function SectionTitle({ kicker, title, text }) {
   return (
@@ -21,6 +29,7 @@ function SectionTitle({ kicker, title, text }) {
 
 /* ---------- Header ---------- */
 const NAV = [
+  ['#groups', 'الأفواج'],
   ['#learn', 'ماذا ستتعلم'],
   ['#program', 'البرنامج'],
   ['#gifts', 'الهدايا'],
@@ -60,20 +69,20 @@ export function Header() {
 
 /* ---------- Hero ---------- */
 function Countdown() {
-  const target = new Date(COURSE.startsAt).getTime()
   const [now, setNow] = useState(() => Date.now())
+  const next = OPEN_GROUPS.find((g) => new Date(g.startsAt).getTime() > now)
   useEffect(() => {
     const id = setInterval(() => setNow(Date.now()), 30000)
     return () => clearInterval(id)
   }, [])
-  const diff = target - now
-  if (diff <= 0) return null
+  if (!next) return null
+  const diff = new Date(next.startsAt).getTime() - now
   const d = Math.floor(diff / 864e5)
   const h = Math.floor((diff % 864e5) / 36e5)
   const m = Math.floor((diff % 36e5) / 6e4)
   return (
-    <div className="countdown" aria-label={`تبدأ الدورة بعد ${d} يوم و${h} ساعة`}>
-      <span className="cd-label">تبدأ الدورة بعد</span>
+    <div className="countdown" aria-label={`يبدأ ${next.name} بعد ${d} يوم و${h} ساعة`}>
+      <span className="cd-label">يبدأ {next.name} بعد</span>
       {[
         [d, 'يوم'],
         [h, 'ساعة'],
@@ -90,10 +99,10 @@ function Countdown() {
 
 export function Hero() {
   const facts = [
-    [CalendarIcon, 'التاريخ', COURSE.dates],
+    [CalendarIcon, 'الأفواج المفتوحة', `${openDates} 2026`],
     [ClockIcon, 'التوقيت', COURSE.hours],
     [PinIcon, 'المكان', 'Coffice، المحمدية مول'],
-    [UsersIcon, 'المقاعد', `${COURSE.seats} مقعدًا فقط`],
+    [UsersIcon, 'المقاعد', `${COURSE.seats} مقعدًا لكل فوج`],
   ]
   return (
     <section className="hero" id="top">
@@ -101,6 +110,9 @@ export function Hero() {
         <motion.span className="tag" initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
           {COURSE.edition} · تكوين حضوري بالجزائر العاصمة
         </motion.span>
+        <motion.p className="hero-notice" initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
+          اكتمل الفوج الأول، وفتحنا فوجين جديدين: {openDates.replace(' أو ', ' و')}
+        </motion.p>
         <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
           دورة <span className="mark">الأستاذ الرقمي</span>
         </motion.h1>
@@ -130,6 +142,49 @@ export function Hero() {
             </li>
           ))}
         </motion.ul>
+      </div>
+    </section>
+  )
+}
+
+/* ---------- Groups ---------- */
+export function Groups() {
+  return (
+    <section className="sec groups-sec" id="groups">
+      <div className="wrap">
+        <SectionTitle kicker="الأفواج" title="اختر الفوج الذي يناسبك" text={`نفس البرنامج والمدرّب والمكان في كل فوج، ${COURSE.hours}. ${COURSE.seats} مقعدًا لكل فوج.`} />
+        <div className="groups">
+          {GROUPS.map((g, i) => {
+            return (
+              <Reveal key={g.id} delay={i * 0.08} className={`group${g.full ? ' is-full' : ''}`}>
+                <div className="group-head">
+                  <h3>{g.name}</h3>
+                  <span className={`status ${g.full ? 'closed' : 'open'}`}>{g.full ? 'مكتمل' : 'التسجيل مفتوح'}</span>
+                </div>
+                <p className="group-dates">{g.dates}</p>
+                <ul className="group-days">
+                  {g.days.map((d, k) => (
+                    <li key={d}>
+                      <b>{COURSE.days[k].label}:</b> {d}
+                    </li>
+                  ))}
+                </ul>
+                {g.full ? (
+                  <p className="group-closed">أُغلق التسجيل في هذا الفوج.</p>
+                ) : (
+                  <>
+                    <p className="group-seats">
+                      المقاعد: <b>{seatsText(g)}</b>
+                    </p>
+                    <button type="button" className="btn btn-yellow btn-block" onClick={() => pickGroup(g.id)}>
+                      سجّل في {g.name}
+                    </button>
+                  </>
+                )}
+              </Reveal>
+            )
+          })}
+        </div>
       </div>
     </section>
   )
@@ -234,12 +289,12 @@ export function Program() {
   return (
     <section className="sec sec-tint" id="program">
       <div className="wrap">
-        <SectionTitle kicker="البرنامج الزمني" title="يومان، 12 ساعة تكوين" text={`6 ساعات في اليوم، ${COURSE.hours}، مع استراحة قهوة.`} />
+        <SectionTitle kicker="البرنامج الزمني" title="يومان، 12 ساعة تكوين" text={`نفس البرنامج في كل الأفواج: 6 ساعات في اليوم، ${COURSE.hours}، مع استراحة قهوة.`} />
         <div className="day-tabs" role="tablist">
           {COURSE.days.map((d, i) => (
             <button key={d.label} type="button" role="tab" aria-selected={day === i} className={day === i ? 'on' : ''} onClick={() => setDay(i)}>
               <b>{d.label}</b>
-              <span>{d.date}</span>
+              <span>{d.theme}</span>
             </button>
           ))}
         </div>
@@ -432,7 +487,6 @@ export function Gifts() {
 
 /* ---------- Price ticket ---------- */
 export function Ticket() {
-  const pct = Math.round((Math.min(SEATS_TAKEN, COURSE.seats) / COURSE.seats) * 100)
   return (
     <section className="sec sec-dark" id="price">
       <div className="wrap ticket-wrap">
@@ -453,13 +507,26 @@ export function Ticket() {
             </ul>
           </div>
           <div className="ticket-side">
-            <p className="seats-title">المقاعد المتبقية</p>
-            <p className="seats-num">
-              <b>{seatsLeft}</b> من {COURSE.seats}
-            </p>
-            <div className="bar" role="img" aria-label={`${SEATS_TAKEN} مقاعد محجوزة من ${COURSE.seats}`}>
-              <motion.span initial={{ width: 0 }} whileInView={{ width: `${pct}%` }} viewport={{ once: true }} transition={{ duration: 1 }} />
-            </div>
+            <p className="seats-title">المقاعد في الأفواج المفتوحة</p>
+            {OPEN_GROUPS.map((g) => {
+              const left = seatsLeft(g)
+              const pct = Math.round(((COURSE.seats - left) / COURSE.seats) * 100)
+              return (
+                <div key={g.id} className="seat-group">
+                  <p className="seats-line">
+                    <span>
+                      {g.name} <small>({g.dates.replace(' 2026', '')})</small>
+                    </span>
+                    <b>{seatsText(g)}</b>
+                  </p>
+                  {g.seatsTaken > 0 && (
+                  <div className="bar" role="img" aria-label={`${COURSE.seats - left} مقاعد محجوزة من ${COURSE.seats} في ${g.name}`}>
+                    <motion.span initial={{ width: 0 }} whileInView={{ width: `${pct}%` }} viewport={{ once: true }} transition={{ duration: 1 }} />
+                  </div>
+                  )}
+                </div>
+              )
+            })}
             <p className="seats-note">الأولوية حسب ترتيب التسجيل</p>
             <a href="#register" className="btn btn-yellow">
               سجّل الآن
@@ -493,8 +560,8 @@ export function Location() {
               <li>
                 <CalendarIcon width={24} height={24} />
                 <span>
-                  <b>الأيام</b>
-                  {COURSE.days.map((d) => d.date).join('، و')}
+                  <b>الأفواج المفتوحة</b>
+                  {OPEN_GROUPS.map((g) => `${g.name}: ${g.days.join(' و')}`).join('، ')}
                 </span>
               </li>
               <li>
@@ -579,7 +646,7 @@ export function MobileBar() {
         <motion.div className="mbar" initial={{ y: 100 }} animate={{ y: 0 }} exit={{ y: 100 }}>
           <div>
             <b>{formatDA(PRICE)}</b>
-            <small>بقي {seatsLeft} مقاعد</small>
+            <small>{OPEN_GROUPS.length === 1 ? OPEN_GROUPS[0].dates : shortDates}</small>
           </div>
           <a href="#register" className="btn btn-yellow">
             سجّل الآن

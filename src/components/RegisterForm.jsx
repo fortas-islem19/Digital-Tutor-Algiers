@@ -1,9 +1,9 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { submitRegistration } from '../lib/submit'
 import { normalizePhone, validate } from '../lib/validate'
 import { WILAYAS } from '../lib/wilayas'
-import { COURSE, PAYMENT, PHONES, PRICE, VENUE, WHATSAPP, formatDA } from '../config'
+import { COURSE, GROUPS, OPEN_GROUPS, PAYMENT, PHONES, PRICE, VENUE, WHATSAPP, formatDA, groupLabel, seatsText } from '../config'
 import { Reveal } from './Motion'
 
 const initial = {
@@ -17,6 +17,8 @@ const initial = {
   laptop: '',
   notes: '',
   consent: false,
+  // Pre-select the group when only one is open
+  group: OPEN_GROUPS.length === 1 ? OPEN_GROUPS[0].id : '',
   payment: 'online',
   website: '', // honeypot
 }
@@ -31,11 +33,13 @@ const PAYMENTS = [
 ]
 const PAYMENT_LABEL = { online: 'دفع إلكتروني (رابط Slick-Pay)', transfer: 'تحويل CCP / بريدي موب' }
 
-const trackPurchase = (category) =>
+const groupById = (id) => GROUPS.find((g) => g.id === id)
+
+const trackPurchase = (category, group) =>
   window.fbq?.('track', 'Purchase', {
     value: PRICE,
     currency: 'DZD',
-    content_name: 'دورة الأستاذ الرقمي - السبورة',
+    content_name: `دورة الأستاذ الرقمي - ${group?.name || 'السبورة'}`,
     content_category: category,
   })
 
@@ -142,6 +146,19 @@ export default function RegisterForm() {
   const [submitted, setSubmitted] = useState(false)
   // idle | sending | redirecting | done | error
   const [state, setState] = useState('idle')
+
+  // "Register in this group" buttons elsewhere on the page pre-select the group here
+  useEffect(() => {
+    const onPick = (e) => {
+      const g = groupById(e.detail)
+      if (!g || g.full) return
+      setValues((v) => ({ ...v, group: g.id }))
+      setErrors((er) => ({ ...er, group: undefined }))
+      setState((st) => (st === 'done' ? st : 'idle'))
+    }
+    window.addEventListener('pick-group', onPick)
+    return () => window.removeEventListener('pick-group', onPick)
+  }, [])
   // Show a field's error once it has been left, or after the first submit attempt
   const visible = (name) => (touched[name] || submitted ? errors[name] : undefined)
 
@@ -189,7 +206,7 @@ export default function RegisterForm() {
     }
     try {
       // Always record the registration first, so nobody is lost if payment fails
-      await submitRegistration({ ...clean, payment: PAYMENT_LABEL[values.payment] })
+      await submitRegistration({ ...clean, group: groupLabel(groupById(values.group)), payment: PAYMENT_LABEL[values.payment] })
     } catch (err) {
       console.error(err)
       setState('error')
@@ -197,7 +214,7 @@ export default function RegisterForm() {
     }
 
     // Meta Pixel: Purchase after FormBold accepts the registration, as on the China page
-    trackPurchase(values.profile)
+    trackPurchase(values.profile, groupById(values.group))
 
     if (values.payment === 'online') {
       setState('redirecting')
@@ -232,14 +249,14 @@ export default function RegisterForm() {
           <span className="kicker">التسجيل</span>
           <h2>احجز مقعدك الآن</h2>
           <p>
-            املأ الاستمارة في أقل من دقيقة، ثم ادفع إلكترونيًا ببطاقة CIB أو الذهبية، أو بتحويل إلى حساب CCP أو بريدي موب. عدد المقاعد {COURSE.seats} فقط، والأولوية حسب ترتيب التسجيل.
+            املأ الاستمارة في أقل من دقيقة، ثم ادفع إلكترونيًا ببطاقة CIB أو الذهبية، أو بتحويل إلى حساب CCP أو بريدي موب. عدد المقاعد {COURSE.seats} لكل فوج، والأولوية حسب ترتيب التسجيل.
           </p>
         </Reveal>
 
         <Reveal className="form-box">
           <div className="form-summary">
             <span>
-              <b>{COURSE.dates}</b>
+              <b>{values.group ? groupLabel(groupById(values.group)) : `الأفواج: ${COURSE.dates}`}</b>
             </span>
             <span>{VENUE.name}</span>
             <span>
@@ -253,7 +270,7 @@ export default function RegisterForm() {
                 title={`شكرًا ${firstName}، تم تسجيلك!`}
                 actions={
                   <>
-                    <a href={`https://wa.me/${WHATSAPP.wa}?text=${encodeURIComponent(`السلام عليكم، هذا وصل الدفع لدورة الأستاذ الرقمي باسم ${values.fullName.trim()}`)}`} target="_blank" rel="noopener noreferrer" className="btn btn-yellow">
+                    <a href={`https://wa.me/${WHATSAPP.wa}?text=${encodeURIComponent(`السلام عليكم، هذا وصل الدفع لدورة الأستاذ الرقمي (${groupById(values.group)?.name || ''}) باسم ${values.fullName.trim()}`)}`} target="_blank" rel="noopener noreferrer" className="btn btn-yellow">
                       أرسل الوصل عبر واتساب
                     </a>
                     <button type="button" className="btn btn-soft" onClick={reset}>
@@ -262,18 +279,41 @@ export default function RegisterForm() {
                   </>
                 }
               >
-                <p>بقيت خطوة واحدة لتأكيد مقعدك: ادفع {formatDA(PRICE)} بإحدى الطريقتين، ثم أرسل لنا صورة الوصل.</p>
+                <p>
+                  سجّلناك في <b>{groupLabel(groupById(values.group))}</b>. بقيت خطوة واحدة لتأكيد مقعدك: ادفع {formatDA(PRICE)} بإحدى الطريقتين، ثم أرسل لنا صورة الوصل.
+                </p>
                 <TransferDetails />
               </Result>
             ) : state === 'redirecting' ? (
-              <Result tone="wait" title="تم تسجيلك، جارٍ تحويلك إلى صفحة الدفع..." actions={<a href={PAYMENT.slickLink} className="btn btn-yellow">افتح صفحة الدفع</a>}>
+              <Result tone="wait" title={`تم تسجيلك في ${groupById(values.group)?.name || 'الدورة'}، جارٍ تحويلك إلى صفحة الدفع...`} actions={<a href={PAYMENT.slickLink} className="btn btn-yellow">افتح صفحة الدفع</a>}>
                 <p>ستنتقل الآن إلى صفحة Slick-Pay لإتمام الدفع ببطاقة CIB أو الذهبية. إذا لم تنتقل تلقائيًا، اضغط على الزر.</p>
               </Result>
             ) : (
               <motion.form key="form" onSubmit={onSubmit} noValidate exit={{ opacity: 0, y: -20 }} aria-label="استمارة التسجيل في دورة الأستاذ الرقمي">
                 <fieldset>
                   <legend>
-                    <span>1</span> معلوماتك
+                    <span>1</span> اختر الفوج
+                  </legend>
+                  <Field label="" name="group" error={visible('group')} full>
+                    <div className="group-options" role="radiogroup" id="group" tabIndex={-1} aria-label="الفوج" aria-invalid={!!visible('group')}>
+                      {GROUPS.map((g) => (
+                        <label key={g.id} className={`group-option${values.group === g.id ? ' on' : ''}${g.full ? ' off' : ''}`}>
+                          <input type="radio" name="group" value={g.id} checked={values.group === g.id} onChange={onChange} disabled={g.full} />
+                          <span>
+                            <b>{g.name}</b>
+                            <span className="go-dates">{g.dates}</span>
+                            <small className="go-days">{g.days.join(' و')}</small>
+                            <small className={g.full ? 'go-full' : 'go-left'}>{seatsText(g)}</small>
+                          </span>
+                        </label>
+                      ))}
+                    </div>
+                  </Field>
+                </fieldset>
+
+                <fieldset>
+                  <legend>
+                    <span>2</span> معلوماتك
                   </legend>
                   <div className="form-grid">
                     <Field label="الاسم واللقب" name="fullName" error={visible('fullName')} required full>
@@ -300,7 +340,7 @@ export default function RegisterForm() {
 
                 <fieldset>
                   <legend>
-                    <span>2</span> ملفك المهني
+                    <span>3</span> ملفك المهني
                   </legend>
                   <div className="form-grid">
                     <Field label="الصفة" name="profile" error={visible('profile')} required full>
@@ -320,7 +360,7 @@ export default function RegisterForm() {
 
                 <fieldset>
                   <legend>
-                    <span>3</span> الدفع والتأكيد
+                    <span>4</span> الدفع والتأكيد
                   </legend>
                   <div className="form-grid">
                     <Field label="طريقة الدفع" name="payment" required full>
