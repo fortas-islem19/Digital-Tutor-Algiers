@@ -3,7 +3,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { submitRegistration } from '../lib/submit'
 import { normalizePhone, validate } from '../lib/validate'
 import { WILAYAS } from '../lib/wilayas'
-import { COURSE, GROUPS, OPEN_GROUPS, PAYMENT, PHONES, PRICE, VENUE, WHATSAPP, formatDA, groupLabel, seatsText } from '../config'
+import { COURSE, GROUPS, OPEN_GROUPS, PAYMENT, PHONES, PRICE, WHATSAPP, formatDA, groupLabel, seatsText } from '../config'
 import { Reveal } from './Motion'
 
 const initial = {
@@ -254,16 +254,6 @@ export default function RegisterForm() {
         </Reveal>
 
         <Reveal className="form-box">
-          <div className="form-summary">
-            <span>
-              <b>{values.group ? groupLabel(groupById(values.group)) : `الأفواج: ${COURSE.dates}`}</b>
-            </span>
-            <span>{VENUE.name}</span>
-            <span>
-              <b>{formatDA(PRICE)}</b>
-            </span>
-          </div>
-
           <AnimatePresence mode="wait">
             {state === 'done' ? (
               <Result

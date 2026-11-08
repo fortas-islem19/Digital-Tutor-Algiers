@@ -1221,18 +1221,6 @@ summary:focus-visible {
   overflow: hidden;
 }
 
-.form-summary {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 8px 22px;
-  padding: 14px 20px;
-  background: var(--purple-800);
-  color: #fff;
-  font-weight: 700;
-  text-align: center;
-}
-
 .form-box form,
 .form-box .success {
   padding: clamp(18px, 4vw, 34px);
