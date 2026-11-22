@@ -1994,3 +1994,142 @@ legend span {
 .hero-seats b {
   color: var(--yellow);
 }
+
+/* ---------- Gallery carousel ---------- */
+.gallery-sec {
+  overflow: hidden;
+}
+
+.car-track {
+  position: relative;
+  display: flex;
+  gap: 0;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  padding: 10px calc((100vw - min(900px, 84vw)) / 2);
+  -webkit-overflow-scrolling: touch;
+}
+
+.car-track::-webkit-scrollbar {
+  display: none;
+}
+
+.car-slide {
+  flex: 0 0 min(900px, 84vw);
+  margin: 0;
+  scroll-snap-align: center;
+}
+
+.car-frame {
+  position: relative;
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  border-radius: 26px;
+  overflow: hidden;
+  aspect-ratio: 16 / 9;
+  background: var(--purple-100);
+  cursor: pointer;
+  box-shadow: 0 30px 60px -30px rgba(60, 6, 97, 0.55);
+}
+
+.car-slide.on .car-frame {
+  cursor: zoom-in;
+}
+
+.car-frame img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  user-select: none;
+}
+
+.car-frame figcaption {
+  position: absolute;
+  inset: auto 16px 16px auto;
+  max-width: calc(100% - 32px);
+  padding: 8px 18px;
+  border-radius: 999px;
+  background: rgba(26, 2, 45, 0.85);
+  color: #fff;
+  font-weight: 700;
+  font-size: 1.05rem;
+  text-align: right;
+}
+
+.car-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  margin-top: 22px;
+}
+
+.car-arrow {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 2px solid var(--purple-500);
+  background: #fff;
+  color: var(--purple-700);
+  font-size: 1.9rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.car-arrow:hover {
+  background: var(--purple-500);
+  color: #fff;
+}
+
+.car-dots {
+  display: flex;
+  gap: 8px;
+  direction: ltr;
+}
+
+.car-dots button {
+  position: relative;
+  width: 12px;
+  height: 12px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: var(--purple-100);
+  overflow: hidden;
+  cursor: pointer;
+  transition: width 0.3s, background 0.3s;
+}
+
+.car-dots button.on {
+  width: 44px;
+  background: #d9c4f2;
+}
+
+.car-progress {
+  position: absolute;
+  inset: 0;
+  background: var(--purple-500);
+  transform-origin: left;
+}
+
+.car-dots button.on:not(:has(.car-progress)) {
+  background: var(--purple-500);
+}
+
+@media (max-width: 600px) {
+  .car-frame {
+    aspect-ratio: 4 / 3;
+    border-radius: 20px;
+  }
+  .car-frame figcaption {
+    inset: auto 10px 10px auto;
+    font-size: 0.95rem;
+    padding: 6px 14px;
+  }
+}
