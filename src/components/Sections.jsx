@@ -329,6 +329,8 @@ export function Program() {
 // Every image in src/assets/gallery shows up here, sorted by file name.
 // A caption is picked from the file name when it contains one of these words.
 const CAPTIONS = [
+  // Checked first, so Algiers photos keep this caption even if their name has another keyword
+  ['algiers', 'دورة الجزائر العاصمة'],
   ['certificate', 'تسليم شهادات المشاركة في ختام الدورة'],
   ['trainer', 'شرح تطبيقي مع المدرّب'],
   ['participants', 'المشاركون أثناء الورشة التطبيقية'],
