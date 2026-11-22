@@ -48,7 +48,7 @@ export const GROUPS = [
     days: ['الخميس 3 ديسمبر', 'الجمعة 4 ديسمبر'],
     startsAt: '2026-12-03T08:30:00+01:00',
     full: false,
-    seatsTaken: 0,
+    seatsTaken: 10, // 4 seats left
   },
   {
     id: 'g3',
@@ -58,6 +58,8 @@ export const GROUPS = [
     startsAt: '2026-12-05T08:30:00+01:00',
     full: false,
     seatsTaken: 0,
+    // Shown instead of a number when the exact count isn't published
+    seatsNote: 'مقاعد قليلة متبقية',
   },
 ]
 
@@ -67,17 +69,19 @@ export const seatsLeft = (g) => (g.full ? 0 : Math.max(COURSE.seats - g.seatsTak
 export const seatsText = (g) => {
   const left = seatsLeft(g)
   if (g.full || left === 0) return 'مكتمل'
+  if (g.seatsNote) return g.seatsNote
   if (g.seatsTaken <= 0) return `${COURSE.seats} مقعدًا فقط`
-  return left <= 10 ? `بقي ${left} مقاعد` : `بقي ${left} مقعدًا`
+  return left <= 10 ? `بقي ${left} مقاعد فقط` : `بقي ${left} مقعدًا`
 }
 export const groupLabel = (g) => `${g.name} (${g.dates})`
 
 export const VENUE = {
-  name: 'Coffice — المحمدية مول',
-  address: 'الطابق الرابع، المحمدية مول، الجزائر العاصمة',
-  mapsLink: 'https://maps.app.goo.gl/xBhGSYecopaUqaes6?g_st=ac',
+  // Venue of groups 2 and 3 (group 1 was held at Coffice, Mohammadia Mall)
+  name: 'Faracha Holistic Center',
+  address: 'Faracha Holistic Center، الجزائر العاصمة',
+  mapsLink: 'https://maps.app.goo.gl/R2aKyQLqjM6MgEoL8?g_st=atm',
   // Embedded map (no API key needed). Replace the query with exact coordinates if the pin is off.
-  embed: 'https://maps.google.com/maps?q=Coffice%20Mohammadia%20Mall%2C%20Alger&z=16&output=embed',
+  embed: 'https://maps.google.com/maps?q=Faracha%20Holistic%20Center&z=16&output=embed',
 }
 
 export const formatDA = (n) => `${n.toLocaleString('en-US')} دج`

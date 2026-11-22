@@ -101,7 +101,7 @@ export function Hero() {
   const facts = [
     [CalendarIcon, 'الأفواج المفتوحة', `${openDates} 2026`],
     [ClockIcon, 'التوقيت', COURSE.hours],
-    [PinIcon, 'المكان', 'Coffice، المحمدية مول'],
+    [PinIcon, 'المكان', VENUE.name],
     [UsersIcon, 'المقاعد', `${COURSE.seats} مقعدًا لكل فوج`],
   ]
   return (
@@ -113,6 +113,13 @@ export function Hero() {
         <motion.p className="hero-notice" initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
           اكتمل الفوج الأول، وفتحنا فوجين جديدين: {openDates.replace(' أو ', ' و')}
         </motion.p>
+        <motion.ul className="hero-seats" initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }}>
+          {OPEN_GROUPS.map((g) => (
+            <li key={g.id}>
+              {g.name}: <b>{seatsText(g)}</b>
+            </li>
+          ))}
+        </motion.ul>
         <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
           دورة <span className="mark">الأستاذ الرقمي</span>
         </motion.h1>
@@ -318,13 +325,68 @@ export function Program() {
   )
 }
 
-/* ---------- Gallery ---------- */
+/* ---------- Gallery (horizontal carousel) ---------- */
+// Every image in src/assets/gallery shows up here, sorted by file name.
+// A caption is picked from the file name when it contains one of these words.
+const CAPTIONS = [
+  ['certificate', 'تسليم شهادات المشاركة في ختام الدورة'],
+  ['trainer', 'شرح تطبيقي مع المدرّب'],
+  ['participants', 'المشاركون أثناء الورشة التطبيقية'],
+  ['workshop', 'عمل فردي على الحواسيب'],
+]
 const photos = Object.entries(import.meta.glob('../assets/gallery/*.{jpg,jpeg,png,webp,JPG,JPEG,PNG,WEBP}', { eager: true, import: 'default' }))
   .sort(([a], [b]) => a.localeCompare(b))
-  .map(([, src]) => src)
+  .map(([path, src]) => ({ src, caption: CAPTIONS.find(([k]) => path.toLowerCase().includes(k))?.[1] || '' }))
+
+const AUTOPLAY_MS = 4500
 
 export function Gallery() {
   const [open, setOpen] = useState(null)
+  const [active, setActive] = useState(0)
+  const [paused, setPaused] = useState(false)
+  const [inView, setInView] = useState(false)
+  const track = useRef(null)
+  const section = useRef(null)
+  const reduced = typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+
+  // Scroll the track so slide i sits in the middle
+  const goTo = (i) => {
+    const el = track.current
+    const slide = el?.children[i]
+    if (!slide) return
+    el.scrollTo({ left: slide.offsetLeft - (el.clientWidth - slide.clientWidth) / 2, behavior: reduced ? 'auto' : 'smooth' })
+  }
+  const step = (d) => goTo((active + d + photos.length) % photos.length)
+
+  // Keep "active" in sync with the slide nearest the centre (also after a swipe)
+  const onScroll = () => {
+    const el = track.current
+    if (!el) return
+    const centre = el.scrollLeft + el.clientWidth / 2
+    let best = 0
+    let dist = Infinity
+    Array.from(el.children).forEach((c, i) => {
+      const d = Math.abs(c.offsetLeft + c.clientWidth / 2 - centre)
+      if (d < dist) {
+        dist = d
+        best = i
+      }
+    })
+    setActive(best)
+  }
+
+  // Autoplay only while the gallery is on screen, not hovered, and motion is allowed
+  useEffect(() => {
+    const io = new IntersectionObserver(([e]) => setInView(e.isIntersecting), { threshold: 0.4 })
+    if (section.current) io.observe(section.current)
+    return () => io.disconnect()
+  }, [])
+  useEffect(() => {
+    if (reduced || paused || !inView || open !== null || photos.length < 2) return
+    const id = setTimeout(() => goTo((active + 1) % photos.length), AUTOPLAY_MS)
+    return () => clearTimeout(id)
+  }, [active, paused, inView, open, reduced])
+
   useEffect(() => {
     if (open === null) return
     const k = (e) => {
@@ -337,28 +399,87 @@ export function Gallery() {
   }, [open])
 
   return (
-    <section className="sec" id="gallery">
+    <section className="sec gallery-sec" id="gallery" ref={section}>
       <div className="wrap">
         <SectionTitle kicker="من الطبعات السابقة" title="صور من دوراتنا" text="أساتذة شاركوا في دورات «الأستاذ الرقمي» السابقة مع السبورة." />
-        {photos.length ? (
-          <div className="photos">
-            {photos.map((src, i) => (
-              <button type="button" key={src} onClick={() => setOpen(i)} aria-label={`تكبير الصورة ${i + 1}`}>
-                <img src={src} alt={`من دورة الأستاذ الرقمي، صورة ${i + 1}`} loading="lazy" />
-              </button>
-            ))}
+      </div>
+      {photos.length ? (
+        <div className="carousel" onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)} onFocus={() => setPaused(true)} onBlur={() => setPaused(false)}>
+          <div className="car-track" ref={track} onScroll={onScroll} dir="ltr" aria-roledescription="carousel" aria-label="صور من دورات الأستاذ الرقمي">
+            {photos.map((p, i) => {
+              const on = i === active
+              return (
+                <motion.figure
+                  key={p.src}
+                  className={`car-slide${on ? ' on' : ''}`}
+                  aria-roledescription="slide"
+                  aria-label={`${i + 1} من ${photos.length}`}
+                  initial={{ opacity: 0, x: 80 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.6, delay: i * 0.08 }}
+                >
+                  <motion.button
+                    type="button"
+                    className="car-frame"
+                    onClick={() => (on ? setOpen(i) : goTo(i))}
+                    aria-label={on ? `تكبير الصورة ${i + 1}` : `عرض الصورة ${i + 1}`}
+                    animate={{ scale: on ? 1 : 0.88, opacity: on ? 1 : 0.55 }}
+                    transition={{ type: 'spring', stiffness: 160, damping: 22 }}
+                  >
+                    <motion.img
+                      src={p.src}
+                      alt={p.caption || `من دورة الأستاذ الرقمي، صورة ${i + 1}`}
+                      loading={i < 2 ? 'eager' : 'lazy'}
+                      draggable="false"
+                      animate={on && !reduced ? { scale: [1, 1.07] } : { scale: 1 }}
+                      transition={{ duration: AUTOPLAY_MS / 1000 + 1, ease: 'linear' }}
+                    />
+                    {p.caption && (
+                      <AnimatePresence>
+                        {on && (
+                          <motion.figcaption dir="rtl" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ delay: 0.25 }}>
+                            {p.caption}
+                          </motion.figcaption>
+                        )}
+                      </AnimatePresence>
+                    )}
+                  </motion.button>
+                </motion.figure>
+              )
+            })}
           </div>
-        ) : (
+
+          {photos.length > 1 && (
+            <div className="car-controls" dir="ltr">
+              <button type="button" className="car-arrow" onClick={() => step(-1)} aria-label="الصورة السابقة">
+                ‹
+              </button>
+              <div className="car-dots" role="tablist" aria-label="اختر صورة">
+                {photos.map((p, i) => (
+                  <button key={p.src} type="button" role="tab" aria-selected={i === active} aria-label={`الصورة ${i + 1}`} className={i === active ? 'on' : ''} onClick={() => goTo(i)}>
+                    {i === active && !reduced && !paused && inView && <motion.span key={active} className="car-progress" initial={{ scaleX: 0 }} animate={{ scaleX: 1 }} transition={{ duration: AUTOPLAY_MS / 1000, ease: 'linear' }} />}
+                  </button>
+                ))}
+              </div>
+              <button type="button" className="car-arrow" onClick={() => step(1)} aria-label="الصورة التالية">
+                ›
+              </button>
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className="wrap">
           <div className="photos-empty">
             <CameraIcon width={40} height={40} />
             <p>الصور قادمة قريبًا</p>
           </div>
-        )}
-      </div>
+        </div>
+      )}
       <AnimatePresence>
         {open !== null && (
           <motion.div className="lightbox" role="dialog" aria-modal="true" onClick={() => setOpen(null)} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-            <img src={photos[open]} alt="" onClick={(e) => e.stopPropagation()} />
+            <motion.img key={open} src={photos[open].src} alt={photos[open].caption} onClick={(e) => e.stopPropagation()} initial={{ scale: 0.92, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} />
             <button type="button" className="lb-close" aria-label="إغلاق" onClick={() => setOpen(null)}>
               ✕
             </button>
@@ -543,7 +664,7 @@ export function Location() {
   return (
     <section className="sec" id="where">
       <div className="wrap">
-        <SectionTitle kicker="مكان الدورة" title="Coffice، المحمدية مول" text={VENUE.address} />
+        <SectionTitle kicker="مكان الدورة" title={VENUE.name} text="مقر دورة الأستاذ الرقمي للفوجين الثاني والثالث، بالجزائر العاصمة." />
         <div className="where">
           <Reveal className="map">
             <iframe title="موقع الدورة على خرائط Google" src={VENUE.embed} loading="lazy" referrerPolicy="no-referrer-when-downgrade" allowFullScreen />

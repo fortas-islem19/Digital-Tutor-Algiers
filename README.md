@@ -1,6 +1,6 @@
 # Digital Tutor Algiers — الأستاذ الرقمي
 
-Landing page and registration form for **Esaboura (السبورة)**'s in-person course *الأستاذ الرقمي: الذكاء الاصطناعي في التعليم* (2nd edition), held 20–21 November 2026 at Coffice, Mohammadia Mall, Algiers. Built with React, Vite and Framer Motion, with the same brand look as the China trip page (`esaboura-china`).
+Landing page and registration form for **Esaboura (السبورة)**'s in-person course *الأستاذ الرقمي: الذكاء الاصطناعي في التعليم* (2nd edition). Group 1 was held on 20–21 November 2026 at Coffice, Mohammadia Mall; groups 2 and 3 (3–4 and 5–6 December 2026) are held at Faracha Holistic Center, Algiers. Built with React, Vite and Framer Motion, with the same brand look as the China trip page (`esaboura-china`).
 
 ## Sections
 
@@ -31,7 +31,7 @@ npm run build    # production build in dist/
 
 ## Adding photos from past courses
 
-Drop `.jpg`, `.png` or `.webp` files into `src/assets/gallery/`. They show up in the gallery automatically, sorted by file name, with a click-to-zoom lightbox. Until there are photos, the gallery shows placeholder tiles. Resize photos to about 1600px wide first to keep the page fast.
+The gallery is a horizontal carousel (autoplay every 4.5 s, paused on hover or when off screen, swipe on phones, arrows, dots and tap-to-enlarge; no autoplay when the visitor prefers reduced motion). It has four photos from the previous edition (the Wi-Fi password signs in the certificate photo are blurred). To add more, drop `.jpg`, `.png` or `.webp` files into `src/assets/gallery/`; add a caption for a new file name in `CAPTIONS` in `src/components/Sections.jsx`. They show up in the gallery automatically, sorted by file name, with a click-to-zoom lightbox. Until there are photos, the gallery shows placeholder tiles. Resize photos to about 1600px wide first to keep the page fast.
 
 ## Registration form
 
@@ -70,7 +70,7 @@ The course runs in several groups with the same programme, trainer, venue and pr
 | الفوج الثالث | Saturday 5 – Sunday 6 December 2026 | open |
 
 - To close a group, set `full: true`. It stays on the page marked «مكتمل» and can't be picked in the form.
-- To show seats left, update `seatsTaken` (14 seats per group, `COURSE.seats`). With 0 the page says «14 مقعدًا فقط»; once seats are taken it says «بقي X مقاعد».
+- To show seats left, update `seatsTaken` (14 seats per group, `COURSE.seats`). With 0 the page says «14 مقعدًا فقط»; once seats are taken it says «بقي X مقاعد فقط». To show a phrase instead of a number, set `seatsNote` (group 3 currently uses «مقاعد قليلة متبقية»).
 - To add a group, copy an entry and change `id`, `name`, `dates`, `days` and `startsAt`.
 
 The groups section, the hero, the countdown (to the next open group), the price ticket, the location and the form all read from this list. The form requires a group; FormBold receives it as `الفوج`, and the Meta Pixel `Purchase` event names it in `content_name`.
