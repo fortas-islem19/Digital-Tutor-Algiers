@@ -31,7 +31,7 @@ npm run build    # production build in dist/
 
 ## Adding photos from past courses
 
-The gallery is a horizontal carousel (autoplay every 4.5 s, paused on hover or when off screen, swipe on phones, arrows, dots and tap-to-enlarge; no autoplay when the visitor prefers reduced motion). It has four photos from the previous edition (the Wi-Fi password signs in the certificate photo are blurred). To add more, drop `.jpg`, `.png` or `.webp` files into `src/assets/gallery/`; add a caption for a new file name in `CAPTIONS` in `src/components/Sections.jsx`. They show up in the gallery automatically, sorted by file name, with a click-to-zoom lightbox. Until there are photos, the gallery shows placeholder tiles. Resize photos to about 1600px wide first to keep the page fast.
+The gallery is a horizontal carousel (autoplay every 4.5 s, paused on hover or when off screen, swipe on phones, arrows, dots and tap-to-enlarge; no autoplay when the visitor prefers reduced motion). It has three photos from the Algiers session (captioned «دورة الجزائر العاصمة», shown first) and four from the previous edition (the Wi-Fi password signs in the certificate photo are blurred). To add more, drop `.jpg`, `.png` or `.webp` files into `src/assets/gallery/`; add a caption for a new file name in `CAPTIONS` in `src/components/Sections.jsx`. They show up in the gallery automatically, sorted by file name, with a click-to-zoom lightbox. Until there are photos, the gallery shows placeholder tiles. Resize photos to about 1600px wide first to keep the page fast.
 
 ## Registration form
 
