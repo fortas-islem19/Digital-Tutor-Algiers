@@ -101,7 +101,7 @@ export function Hero() {
   const facts = [
     [CalendarIcon, 'الأفواج المفتوحة', `${openDates} 2026`],
     [ClockIcon, 'التوقيت', COURSE.hours],
-    [PinIcon, 'المكان', 'Coffice، المحمدية مول'],
+    [PinIcon, 'المكان', VENUE.name],
     [UsersIcon, 'المقاعد', `${COURSE.seats} مقعدًا لكل فوج`],
   ]
   return (
@@ -113,6 +113,13 @@ export function Hero() {
         <motion.p className="hero-notice" initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
           اكتمل الفوج الأول، وفتحنا فوجين جديدين: {openDates.replace(' أو ', ' و')}
         </motion.p>
+        <motion.ul className="hero-seats" initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }}>
+          {OPEN_GROUPS.map((g) => (
+            <li key={g.id}>
+              {g.name}: <b>{seatsText(g)}</b>
+            </li>
+          ))}
+        </motion.ul>
         <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
           دورة <span className="mark">الأستاذ الرقمي</span>
         </motion.h1>
@@ -543,7 +550,7 @@ export function Location() {
   return (
     <section className="sec" id="where">
       <div className="wrap">
-        <SectionTitle kicker="مكان الدورة" title="Coffice، المحمدية مول" text={VENUE.address} />
+        <SectionTitle kicker="مكان الدورة" title={VENUE.name} text="مقر دورة الأستاذ الرقمي للفوجين الثاني والثالث، بالجزائر العاصمة." />
         <div className="where">
           <Reveal className="map">
             <iframe title="موقع الدورة على خرائط Google" src={VENUE.embed} loading="lazy" referrerPolicy="no-referrer-when-downgrade" allowFullScreen />

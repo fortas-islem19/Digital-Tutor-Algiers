@@ -719,8 +719,8 @@ summary:focus-visible {
 /* ---------- Gallery ---------- */
 .photos {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(min(420px, 100%), 1fr));
+  gap: 14px;
 }
 
 .photos button {
@@ -1971,4 +1971,26 @@ legend span {
   font-size: 1.05rem;
   color: var(--red);
   white-space: nowrap;
+}
+
+.hero-seats {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+
+.hero-seats li {
+  padding: 6px 16px;
+  border-radius: 999px;
+  background: var(--red);
+  color: #fff;
+  font-weight: 700;
+}
+
+.hero-seats b {
+  color: var(--yellow);
 }
