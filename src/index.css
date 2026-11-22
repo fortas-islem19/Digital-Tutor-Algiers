@@ -1863,11 +1863,11 @@ legend span {
   font-size: 1.25rem;
 }
 
-/* Group choice in the form */
+/* Group choice in the form: colour-coded cards */
 .group-options {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
+  gap: 12px;
 }
 
 .group-option {
@@ -1882,68 +1882,144 @@ legend span {
   pointer-events: none;
 }
 
-.group-option > span {
+/* Open group, not selected: light purple card with a purple border */
+.go-card {
   display: grid;
-  gap: 2px;
+  gap: 4px;
   height: 100%;
-  padding: 12px 14px;
-  border-radius: 14px;
-  border: 2px solid #cfc0e0;
-  transition: border-color 0.15s, background 0.15s;
+  padding: 14px 16px 16px;
+  border-radius: 16px;
+  border: 2px solid var(--purple-500);
+  border-top-width: 6px;
+  background: var(--purple-50);
+  color: var(--text);
+  transition: background 0.2s, border-color 0.2s, transform 0.15s, box-shadow 0.2s;
 }
 
-.group-option b {
-  font-size: 1.1rem;
+.group-option:not(.off):hover .go-card {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px -14px rgba(60, 6, 97, 0.5);
+}
+
+.go-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.go-top b {
+  font-family: var(--font-display);
+  font-size: 1.2rem;
   color: var(--purple-900);
 }
 
+.go-radio {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 2px solid var(--purple-500);
+  background: #fff;
+  font-weight: 800;
+  font-size: 0.95rem;
+  line-height: 1;
+}
+
 .go-dates {
-  font-weight: 700;
+  font-weight: 800;
+  font-size: 1.08rem;
+  color: var(--purple-700);
 }
 
-.go-left {
-  color: var(--green);
-  font-weight: 700;
+.go-days {
+  color: var(--text-2);
   font-size: 0.95rem;
 }
 
-.go-full {
-  color: var(--red);
-  font-weight: 700;
+.go-badge {
+  justify-self: start;
+  margin-top: 6px;
+  padding: 3px 12px;
+  border-radius: 999px;
+  font-weight: 800;
   font-size: 0.95rem;
 }
 
-.group-option:hover > span {
-  border-color: var(--purple-500);
+.go-badge.open {
+  background: var(--red);
+  color: #fff;
 }
 
-.group-option.on > span {
-  border-color: var(--purple-500);
-  background: var(--purple-50);
-  box-shadow: inset 0 0 0 1px var(--purple-500);
+/* Selected group: solid purple with white text and a yellow check */
+.group-option.on .go-card {
+  background: linear-gradient(150deg, var(--purple-500), var(--purple-800));
+  border-color: var(--yellow);
+  color: #fff;
+  box-shadow: 0 16px 30px -16px rgba(138, 11, 214, 0.8);
 }
 
+.group-option.on .go-top b,
+.group-option.on .go-dates,
+.group-option.on .go-days {
+  color: #fff;
+}
+
+.group-option.on .go-radio {
+  border-color: var(--yellow);
+  background: var(--yellow);
+  color: var(--purple-950);
+}
+
+.group-option.on .go-badge.open {
+  background: var(--yellow);
+  color: var(--purple-950);
+}
+
+/* Full group: grey, crossed out, red "مكتمل" badge */
 .group-option.off {
   cursor: not-allowed;
 }
 
-.group-option.off > span {
-  background: #f6f4f8;
-  border-color: var(--line);
+.group-option.off .go-card {
+  background: #f3f1f5;
+  border-color: #d6d0dc;
+  border-top-color: #b9b1c2;
 }
 
-.group-option.off .go-dates {
+.group-option.off .go-top b,
+.group-option.off .go-dates,
+.group-option.off .go-days {
+  color: #7d7387;
+}
+
+.group-option.off .go-dates,
+.group-option.off .go-days {
   text-decoration: line-through;
-  color: var(--text-2);
 }
 
-.group-option input:focus-visible + span {
-  outline: 3px solid var(--purple-500);
-  outline-offset: 2px;
+.group-option.off .go-radio {
+  border-color: #c9c1d1;
+  background: #ebe7ef;
 }
 
-.field.invalid .group-option:not(.off) > span {
+.go-badge.full {
+  background: #fde8e6;
+  color: var(--red);
+  border: 1px solid #f5b8b0;
+}
+
+.group-option input:focus-visible + .go-card {
+  outline: 3px solid var(--yellow-deep);
+  outline-offset: 3px;
+}
+
+/* No group chosen on submit: red borders on the open groups */
+.field.invalid .group-option:not(.off) .go-card {
   border-color: var(--red);
+  background: #fff5f4;
 }
 
 @media (max-width: 860px) {

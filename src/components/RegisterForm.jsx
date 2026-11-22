@@ -289,11 +289,16 @@ export default function RegisterForm() {
                       {GROUPS.map((g) => (
                         <label key={g.id} className={`group-option${values.group === g.id ? ' on' : ''}${g.full ? ' off' : ''}`}>
                           <input type="radio" name="group" value={g.id} checked={values.group === g.id} onChange={onChange} disabled={g.full} />
-                          <span>
-                            <b>{g.name}</b>
+                          <span className="go-card">
+                            <span className="go-top">
+                              <b>{g.name}</b>
+                              <span className="go-radio" aria-hidden="true">
+                                {values.group === g.id && '✓'}
+                              </span>
+                            </span>
                             <span className="go-dates">{g.dates}</span>
                             <small className="go-days">{g.days.join(' و')}</small>
-                            <small className={g.full ? 'go-full' : 'go-left'}>{seatsText(g)}</small>
+                            <small className={`go-badge ${g.full ? 'full' : 'open'}`}>{seatsText(g)}</small>
                           </span>
                         </label>
                       ))}
