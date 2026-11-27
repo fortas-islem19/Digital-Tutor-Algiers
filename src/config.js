@@ -47,8 +47,8 @@ export const GROUPS = [
     dates: '3 – 4 ديسمبر 2026',
     days: ['الخميس 3 ديسمبر', 'الجمعة 4 ديسمبر'],
     startsAt: '2026-12-03T08:30:00+01:00',
-    full: false,
-    seatsTaken: 10, // 4 seats left
+    full: true,
+    seatsTaken: 14,
   },
   {
     id: 'g3',
