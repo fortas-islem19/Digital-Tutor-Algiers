@@ -7,6 +7,7 @@ import { AUDIENCE, AXES, FAQ, GEMINI, OUTPUTS, RECORDED, REQUIREMENTS, SCHEDULE,
 import { CalendarIcon, CameraIcon, CapIcon, CheckIcon, ClockIcon, GiftIcon, PhoneIcon, PinIcon, PlayIcon, UsersIcon } from './Icons'
 import { Reveal } from './Motion'
 
+const ONE_OPEN = OPEN_GROUPS.length === 1
 const openDates = OPEN_GROUPS.map((g) => g.dates.replace(' 2026', '')).join(' أو ')
 // Compact form for tight spots, e.g. "3 – 4 أو 5 – 6 ديسمبر"
 const shortDates = openDates.replace(/ ديسمبر أو /g, ' أو ')
@@ -99,7 +100,7 @@ function Countdown() {
 
 export function Hero() {
   const facts = [
-    [CalendarIcon, 'الأفواج المفتوحة', `${openDates} 2026`],
+    [CalendarIcon, ONE_OPEN ? 'الفوج المفتوح' : 'الأفواج المفتوحة', `${openDates} 2026`],
     [ClockIcon, 'التوقيت', COURSE.hours],
     [PinIcon, 'المكان', VENUE.name],
     [UsersIcon, 'المقاعد', `${COURSE.seats} مقعدًا لكل فوج`],
@@ -111,7 +112,9 @@ export function Hero() {
           {COURSE.edition} · تكوين حضوري بالجزائر العاصمة
         </motion.span>
         <motion.p className="hero-notice" initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
-          اكتمل الفوج الأول، وفتحنا فوجين جديدين: {openDates.replace(' أو ', ' و')}
+          {ONE_OPEN
+            ? `اكتمل الفوجان الأول والثاني، والتسجيل مفتوح في ${OPEN_GROUPS[0].name}: ${openDates}`
+            : `اكتمل الفوج الأول، وفتحنا فوجين جديدين: ${openDates.replace(' أو ', ' و')}`}
         </motion.p>
         <motion.ul className="hero-seats" initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }}>
           {OPEN_GROUPS.map((g) => (
@@ -630,7 +633,7 @@ export function Ticket() {
             </ul>
           </div>
           <div className="ticket-side">
-            <p className="seats-title">المقاعد في الأفواج المفتوحة</p>
+            <p className="seats-title">{ONE_OPEN ? `المقاعد في ${OPEN_GROUPS[0].name}` : 'المقاعد في الأفواج المفتوحة'}</p>
             {OPEN_GROUPS.map((g) => {
               const left = seatsLeft(g)
               const pct = Math.round(((COURSE.seats - left) / COURSE.seats) * 100)
@@ -683,7 +686,7 @@ export function Location() {
               <li>
                 <CalendarIcon width={24} height={24} />
                 <span>
-                  <b>الأفواج المفتوحة</b>
+                  <b>{ONE_OPEN ? 'الفوج المفتوح' : 'الأفواج المفتوحة'}</b>
                   {OPEN_GROUPS.map((g) => `${g.name}: ${g.days.join(' و')}`).join('، ')}
                 </span>
               </li>

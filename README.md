@@ -66,7 +66,7 @@ The course runs in several groups with the same programme, trainer, venue and pr
 | Group | Dates | Status |
 | --- | --- | --- |
 | الفوج الأول | 20 – 21 November 2026 | full (registration closed) |
-| الفوج الثاني | Thursday 3 – Friday 4 December 2026 | open |
+| الفوج الثاني | Thursday 3 – Friday 4 December 2026 | full (registration closed) |
 | الفوج الثالث | Saturday 5 – Sunday 6 December 2026 | open |
 
 - To close a group, set `full: true`. It stays on the page marked «مكتمل» and can't be picked in the form.
